@@ -1,0 +1,18 @@
+.installationinformation
+.metadata/
+AllowedPackages.txt
+DisallowedClasses.txt
+MethodCosts.txt
+version.txt
+
+doc/
+art/
+music/
+sound/
+map editor/
+
+*.conf
+*.xml
+*.jar
+*.class*
+*.project
