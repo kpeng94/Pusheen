@@ -15,8 +15,8 @@ public class RobotPlayer {
 	/* Main Method */
 	public static void run(RobotController rcin) {
 		/* Initialize static values */
-		rand = new Rand(rc.getRobot().getID());
 		rc = rcin;
+		rand = new Rand(rc.getRobot().getID());
 		
 		while (true) {
 			/* Save dynamic values */
