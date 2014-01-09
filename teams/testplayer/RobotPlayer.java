@@ -8,9 +8,16 @@ static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction
 	/* Static values (these do not change over multiple rounds) */
 	static Rand rand; // Random number generator
 	static RobotController rc; // Robot Controller
+	static int width; // Map Width
+	static int height; // Map Height
+	static double[][] cowRates; // Spawn rate of cows
+	static TerrainTile[][] map; // Terrain information of map (this will be built by the HQ)
 	
 	/* Dynamic values (these change every round, but are cached to prevent recomputation */
 	static MapLocation curLoc; // Current location of the robot
+	
+	static boolean mapComplete; // Whether HQ is done scanning map
+	static int curCheck; // Current sensed location
 	
 	static int temp;
 	
@@ -19,6 +26,10 @@ static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction
 		/* Initialize static values */
 		rc = rcin;
 		rand = new Rand(rc.getRobot().getID());
+		cowRates = rc.senseCowGrowth();
+		width = rc.getMapWidth();
+		height = rc.getMapHeight();
+		map = new TerrainTile[((width/4) + 1) * 4][((height/4) + 1) * 4];
 		
 		while (true) {
 			/* Save dynamic values */
@@ -31,6 +42,7 @@ static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction
 					runHQ();
 				}
 				catch (Exception e) {
+//					e.printStackTrace();
 					System.out.println("HQ Exception");
 				}
 				break;
@@ -77,11 +89,9 @@ static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction
 			}
 		}
 		// Otherwise, spend all most remaining bytecodes left on calculations
-		while (Clock.getBytecodesLeft() > 1000) {
-			
-		}
+		calculateHQ();
 	}
-	
+
 	/* Runs code for Soldiers */
 	private static void runSoldier() throws GameActionException {
 		if (rc.isActive()) {
@@ -138,6 +148,46 @@ static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction
 			}
 			rc.attackSquare(pastrs[temp]);
 			temp = (temp + 1) % pastrs.length;
+		}
+	}
+	
+	/* Does calculations using the HQ */
+	private static void calculateHQ() throws GameActionException {
+		if (!mapComplete) {
+			while(Clock.getBytecodesLeft() > 1000) {
+				int xBase = 4 * (curCheck % (width/4 + 1));
+				int yBase = 4 * (curCheck / (height/4 + 1));
+				int data = 0;
+				for (int i = 16; i-- > 0;) {
+					int x = xBase + (i % 4);
+					int y = yBase + (i / 4);
+					map[x][y] = rc.senseTerrainTile(new MapLocation(x, y));
+					data = (data << 2) & tileToInt(map[x][y]);
+				}
+				rc.broadcast(1000 + curCheck, data);
+				curCheck += 1;
+				System.out.println(Clock.getBytecodesLeft());
+				if (curCheck >= (width/4 + 1) * (height/4 + 1)) {
+					mapComplete = true;
+					break;
+				}
+			}
+			System.out.println("BROKE OUT BRO");
+		}
+	}
+
+	private static int tileToInt(TerrainTile terrainTile) {
+		switch(terrainTile) {
+		case NORMAL:
+			return 0;
+		case ROAD:
+			return 1;
+		case VOID:
+			return 2;
+		case OFF_MAP:
+			return 3;
+		default:
+			return 0;
 		}
 	}
 	
