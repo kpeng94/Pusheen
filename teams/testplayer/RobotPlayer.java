@@ -2,8 +2,10 @@ package testplayer;
 
 import battlecode.common.*;
 
+
+/* Written by Rene */
 public class RobotPlayer {
-static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
+	static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
 	
 	/* Static values (these do not change over multiple rounds) */
 	static Rand rand; // Random number generator
@@ -42,7 +44,6 @@ static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction
 					runHQ();
 				}
 				catch (Exception e) {
-//					e.printStackTrace();
 					System.out.println("HQ Exception");
 				}
 				break;
@@ -78,14 +79,27 @@ static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction
 	/* Runs code for HQ */
 	private static void runHQ() throws GameActionException {
 		// Spawn in a random direction if its able to spawn
-//		if (rc.isActive() && rc.senseRobotCount() < 25) {
-//			Direction spawnDir = dir[rand.nextAnd(0b111)];
-//			if (rc.senseObjectAtLocation(curLoc.add(spawnDir)) == null)
-//				rc.spawn(spawnDir);
-//		}
-		if (rc.isActive()) {
-			if (rc.senseRobotCount() == 0) {
-				rc.spawn(rc.getTeam() == Team.A ? Direction.EAST : Direction.WEST);
+		if (rc.isActive() && rc.senseRobotCount() < 25) {
+			Direction spawnDir = dir[rand.nextAnd(0b111)];
+			if (rc.senseObjectAtLocation(curLoc.add(spawnDir)) == null)
+				rc.spawn(spawnDir);
+		}
+		// Attack nearby enemies
+		attack : {
+			Robot[] enemy = rc.senseNearbyGameObjects(Robot.class, 25, rc.getTeam().opponent());
+			for (int i = enemy.length; i-- > 0;) {
+				MapLocation loc = rc.senseRobotInfo(enemy[i]).location;
+				if (rc.canAttackSquare(loc)) {
+					rc.attackSquare(loc);
+					break attack;
+				}
+				else {
+					loc = new MapLocation(loc.x - Integer.signum(loc.x - curLoc.x), loc.y - Integer.signum(loc.y - curLoc.y));
+					if (rc.canAttackSquare(loc)) {
+						rc.attackSquare(loc);
+						break attack;
+					}
+				}
 			}
 		}
 		// Otherwise, spend all most remaining bytecodes left on calculations
@@ -95,24 +109,7 @@ static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction
 	/* Runs code for Soldiers */
 	private static void runSoldier() throws GameActionException {
 		if (rc.isActive()) {
-			if (rc.getTeam() == Team.B) {
-				rc.construct(RobotType.PASTR);
-			}
-			else {
-				if (curLoc.x == 23) {
-					Direction x = Direction.EAST;
-					Direction y = Direction.NORTH;
-					if (rand.nextAnd(0b1) == 1) {
-						rc.attackSquare(curLoc.add(x,2).add(y,2));
-					}
-					else {
-						rc.attackSquare(curLoc.add(x,2).add(y,-2));
-					}
-				}
-				else {
-					rc.move(Direction.EAST);
-				}
-			}
+			rc.construct(RobotType.PASTR);
 //			if (curLoc.x == 14) {
 //				rc.construct(RobotType.NOISETOWER);
 //			}
@@ -162,32 +159,16 @@ static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction
 					int x = xBase + (i % 4);
 					int y = yBase + (i / 4);
 					map[x][y] = rc.senseTerrainTile(new MapLocation(x, y));
-					data = (data << 2) & tileToInt(map[x][y]);
+					data = (data << 2) & map[x][y].ordinal();
 				}
 				rc.broadcast(1000 + curCheck, data);
 				curCheck += 1;
-				System.out.println(Clock.getBytecodesLeft());
 				if (curCheck >= (width/4 + 1) * (height/4 + 1)) {
 					mapComplete = true;
 					break;
 				}
 			}
-			System.out.println("BROKE OUT BRO");
-		}
-	}
-
-	private static int tileToInt(TerrainTile terrainTile) {
-		switch(terrainTile) {
-		case NORMAL:
-			return 0;
-		case ROAD:
-			return 1;
-		case VOID:
-			return 2;
-		case OFF_MAP:
-			return 3;
-		default:
-			return 0;
+			System.out.println(Clock.getBytecodesLeft());
 		}
 	}
 	
