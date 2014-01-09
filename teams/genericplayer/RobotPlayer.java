@@ -76,7 +76,7 @@ public class RobotPlayer {
 		
 	}
 
-	/* RUns code for Noise Towers */
+	/* Runs code for Noise Towers */
 	private static void runNoise() throws GameActionException {
 		
 	}
