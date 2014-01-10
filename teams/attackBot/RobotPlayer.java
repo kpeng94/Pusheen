@@ -14,7 +14,9 @@ public class RobotPlayer {
 	static Rand rand; // Random number generator
 	static RobotController rc; // Robot Controller
 	static MapLocation enemyHQ; // Location of enemy HQ
+	static MapLocation teamHQ; // Location of team HQ
 	static int directionalLooks[] = new int[]{0,1,-1,2,-2,3,-3,4};
+	static MapLocation swarmLoc;
 
 	/* Dynamic values (these change every round, but are cached to prevent recomputation */
 	static MapLocation curLoc; // Current location of the robot
@@ -27,6 +29,10 @@ public class RobotPlayer {
 		rc = rcin;
 		rand = new Rand(rc.getRobot().getID());
 		enemyHQ = rc.senseEnemyHQLocation();
+		teamHQ = rc.senseHQLocation();
+		int swarmX = enemyHQ.x-teamHQ.x > 0 ? enemyHQ.x - teamHQ.x : teamHQ.x - enemyHQ.x;
+		int swarmY = enemyHQ.y-teamHQ.y > 0 ? enemyHQ.y - teamHQ.x : teamHQ.y - enemyHQ.y;
+		swarmLoc = new MapLocation(swarmX, swarmY);
 
 		while (true) {
 			/* Save dynamic values */

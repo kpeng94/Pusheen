@@ -1,7 +1,12 @@
-package testplayer2;
+package attackBotv2;
 
 import battlecode.common.*;
 
+/**
+ * 
+ * @author nivek
+ *
+ */
 public class RobotPlayer {
 	static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
 
@@ -9,6 +14,9 @@ public class RobotPlayer {
 	static Rand rand; // Random number generator
 	static RobotController rc; // Robot Controller
 	static MapLocation enemyHQ; // Location of enemy HQ
+	static MapLocation teamHQ; // Location of team HQ
+	static int directionalLooks[] = new int[]{0,1,-1,2,-2,3,-3,4};
+	static MapLocation swarmLoc;
 
 	/* Dynamic values (these change every round, but are cached to prevent recomputation */
 	static MapLocation curLoc; // Current location of the robot
@@ -21,6 +29,10 @@ public class RobotPlayer {
 		rc = rcin;
 		rand = new Rand(rc.getRobot().getID());
 		enemyHQ = rc.senseEnemyHQLocation();
+		teamHQ = rc.senseHQLocation();
+		int swarmX = enemyHQ.x-teamHQ.x > 0 ? enemyHQ.x - teamHQ.x : teamHQ.x - enemyHQ.x;
+		int swarmY = enemyHQ.y-teamHQ.y > 0 ? enemyHQ.y - teamHQ.x : teamHQ.y - enemyHQ.y;
+		swarmLoc = new MapLocation(swarmX, swarmY);
 
 		while (true) {
 			/* Save dynamic values */
@@ -127,7 +139,7 @@ public class RobotPlayer {
 				break;
 			}
 			if (moveDir != Direction.OMNI && moveDir != Direction.NONE && rc.canMove(moveDir))
-				rc.move(moveDir);
+				BasicPathing.tryToMove(moveDir, true, rc, directionalLooks, dir);
 		}
 	}
 

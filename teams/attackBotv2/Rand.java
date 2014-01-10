@@ -1,4 +1,4 @@
-package testplayer2;
+package attackBotv2;
 
 public class Rand {
 	static final long a = 0xffffda61L;

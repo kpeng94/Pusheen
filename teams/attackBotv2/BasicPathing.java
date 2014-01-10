@@ -1,4 +1,4 @@
-package attackBot;
+package attackBotv2;
 
 import java.util.ArrayList;
 
