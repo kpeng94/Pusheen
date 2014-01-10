@@ -3,7 +3,6 @@ package coarsenserPlayer;
 import java.util.ArrayList;
 import java.util.Random;
 
-import attackBotv2.BasicPathing;
 import battlecode.common.*;
 
 public class RobotPlayer{
