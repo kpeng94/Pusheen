@@ -87,7 +87,7 @@ public class RobotPlayer {
 	private static void runHQ() throws GameActionException {
 		// Spawn in a random direction if its able to spawn
 		if (rc.isActive() && rc.senseRobotCount() < 25) {
-			Direction spawnDir = dir[rand.nextAnd(0b111)];
+			Direction spawnDir = dir[rand.nextAnd(7)];
 			if (rc.senseObjectAtLocation(curLoc.add(spawnDir)) == null)
 				rc.spawn(spawnDir);
 		}
@@ -131,7 +131,7 @@ public class RobotPlayer {
 
 			MapLocation[] pastrs = rc.sensePastrLocations(rc.getTeam().opponent());
 			Direction moveDir;
-			int switchCase = rand.nextAnd(0b1111);
+			int switchCase = rand.nextAnd(15);
 			switch(switchCase){
 			case 0:
 			case 1:

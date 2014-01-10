@@ -84,7 +84,7 @@ public class RobotPlayer {
 	private static void runHQ() throws GameActionException {
 		// Spawn in a random direction if its able to spawn
 		if (rc.isActive() && rc.senseRobotCount() < 25) {
-			Direction spawnDir = dir[rand.nextAnd(0b111)];
+			Direction spawnDir = dir[rand.nextAnd(7)];
 			if (rc.senseObjectAtLocation(curLoc.add(spawnDir)) == null)
 				rc.spawn(spawnDir);
 		}
@@ -128,7 +128,7 @@ public class RobotPlayer {
 //				rc.move(Direction.EAST);
 //			}
 
-//			Direction moveDir = dir[rand.nextAnd(0b111)];
+//			Direction moveDir = dir[rand.nextAnd(7)];
 //			if (rc.canMove(moveDir))
 //				rc.move(moveDir);
 		}
@@ -206,7 +206,7 @@ public class RobotPlayer {
 			for (int i = 16; i-- > 0;) {
 				int x = xBase + (i % 4);
 				int y = yBase + (i / 4);
-				map[x][y] = tiles[(data >> (2*i)) & 0b11];
+				map[x][y] = tiles[(data >> (2*i)) & 3];
 			}
 			if (--curCheck < 0) {
 				mapComplete = true;
