@@ -28,10 +28,11 @@ public class RobotPlayer {
 		/* Initialize static values */
 		rc = rcin;
 		rand = new Rand(rc.getRobot().getID());
+		
 		enemyHQ = rc.senseEnemyHQLocation();
 		teamHQ = rc.senseHQLocation();
-		int swarmX = enemyHQ.x-teamHQ.x > 0 ? enemyHQ.x - teamHQ.x : teamHQ.x - enemyHQ.x;
-		int swarmY = enemyHQ.y-teamHQ.y > 0 ? enemyHQ.y - teamHQ.x : teamHQ.y - enemyHQ.y;
+		int swarmX = enemyHQ.x-teamHQ.x > 0 ? (enemyHQ.x - teamHQ.x) /3 : (teamHQ.x - enemyHQ.x)/3;
+		int swarmY = enemyHQ.y-teamHQ.y > 0 ? (enemyHQ.y - teamHQ.x) /3 : (teamHQ.y - enemyHQ.y)/3;
 		swarmLoc = new MapLocation(swarmX, swarmY);
 
 		while (true) {
@@ -127,11 +128,12 @@ public class RobotPlayer {
 			case 5:
 			case 6:
 			case 7:
+				// Attack all and every PASTR.
 				if(pastrs.length > 0){
 					moveDir = curLoc.directionTo(pastrs[0]);
 				}
 				else{
-					moveDir = curLoc.directionTo(new MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2));
+					moveDir = curLoc.directionTo(swarmLoc);
 				}
 				break;
 			default:

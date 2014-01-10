@@ -22,16 +22,21 @@ public class RobotPlayer {
 	static MapLocation curLoc; // Current location of the robot
 
 	static int temp;
+	static int divider = 3;
 
 	/* Main Method */
 	public static void run(RobotController rcin) {
 		/* Initialize static values */
 		rc = rcin;
 		rand = new Rand(rc.getRobot().getID());
+		
+		// Calculates a swarming position between the enemy and team HQ [parameter divider puts how far along the line between the HQs the swarm goes]
 		enemyHQ = rc.senseEnemyHQLocation();
 		teamHQ = rc.senseHQLocation();
-		int swarmX = enemyHQ.x-teamHQ.x > 0 ? enemyHQ.x - teamHQ.x : teamHQ.x - enemyHQ.x;
-		int swarmY = enemyHQ.y-teamHQ.y > 0 ? enemyHQ.y - teamHQ.x : teamHQ.y - enemyHQ.y;
+		int swarmX = teamHQ.x + (enemyHQ.x-teamHQ.x) / divider;
+		int swarmY = teamHQ.y + (enemyHQ.y-teamHQ.y) / divider;
+		rc.setIndicatorString(0, swarmX+"");
+		rc.setIndicatorString(1, swarmY+"");
 		swarmLoc = new MapLocation(swarmX, swarmY);
 
 		while (true) {
@@ -86,12 +91,21 @@ public class RobotPlayer {
 			if (rc.senseObjectAtLocation(curLoc.add(spawnDir)) == null)
 				rc.spawn(spawnDir);
 		}
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, 10000, rc.getTeam().opponent());
-		if (enemyRobots.length > 0){
-			for(int i = enemyRobots.length; i-- > 0;){
-				RobotInfo info = rc.senseRobotInfo(enemyRobots[i]);
-				if(info.location.distanceSquaredTo(curLoc) <= 15){
-					rc.attackSquare(info.location);
+		// Attack nearby enemies
+		attack : {
+			Robot[] enemy = rc.senseNearbyGameObjects(Robot.class, 25, rc.getTeam().opponent());
+			for (int i = enemy.length; i-- > 0;) {
+				MapLocation loc = rc.senseRobotInfo(enemy[i]).location;
+				if (rc.canAttackSquare(loc)) {
+					rc.attackSquare(loc);
+					break attack;
+				}
+				else {
+					loc = new MapLocation(loc.x - Integer.signum(loc.x - curLoc.x), loc.y - Integer.signum(loc.y - curLoc.y));
+					if (rc.canAttackSquare(loc)) {
+						rc.attackSquare(loc);
+						break attack;
+					}
 				}
 			}
 		}
@@ -127,11 +141,15 @@ public class RobotPlayer {
 			case 5:
 			case 6:
 			case 7:
+				moveDir = curLoc.directionTo(swarmLoc);
+				// Only attack PASTRs that are not within the striking range of an HQ.
 				if(pastrs.length > 0){
-					moveDir = curLoc.directionTo(pastrs[0]);
-				}
-				else{
-					moveDir = curLoc.directionTo(new MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2));
+					for(int i = pastrs.length; i-->0;){
+						if(pastrs[i].distanceSquaredTo(enemyHQ) > 25){
+							moveDir = curLoc.directionTo(pastrs[0]);
+							break;
+						}
+					}
 				}
 				break;
 			default:
