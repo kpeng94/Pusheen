@@ -14,7 +14,7 @@ music/
 sound/
 map editor/
 
-build.xml
+/build.xml
 *.jar
 *.class*
 *.project
