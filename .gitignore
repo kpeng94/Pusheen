@@ -4,7 +4,10 @@ AllowedPackages.txt
 DisallowedClasses.txt
 MethodCosts.txt
 version.txt
+matchmaker/output
 
+matchmaker/logs/
+matchmaker/replays/
 doc/
 art/
 music/
