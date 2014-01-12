@@ -22,6 +22,8 @@ public class RobotPlayer {
 	static int directionalLooks[] = new int[]{0,1,-1,2,-2,3,-3,4};	
 	static boolean isAssignedPASTR = false;
 	static final int NUMBER_OF_PASTURES_TO_BUILD = 5;
+	static int width;
+	static int height;
 
 	/* Dynamic values (these change every round, but are cached to prevent recomputation */
 	static MapLocation curLoc; // Current location of the robot
@@ -39,6 +41,9 @@ public class RobotPlayer {
 		/* Initialize static values */
 		rc = rcin;
 		rand = new Rand(rc.getRobot().getID());
+		width = rc.getMapWidth();
+		height = rc.getMapHeight();
+		allCowGrowths = rc.senseCowGrowth();
 		
 		while (true) {
 			/* Save dynamic values */
@@ -88,6 +93,7 @@ public class RobotPlayer {
 		if (pastrLocations.size() < NUMBER_OF_PASTURES_TO_BUILD) {
 			generateBestPastrLocNearMeBasedOnCowGrowthRate(10);
 		}
+		System.out.println(Clock.getRoundNum());
 		if (rc.isActive()) {
 			Direction spawnDir = dir[rand.nextAnd(7)];
 			if (rc.senseObjectAtLocation(curLoc.add(spawnDir)) == null) {
@@ -99,11 +105,11 @@ public class RobotPlayer {
 			}
 		}
 		
-		if (Clock.getRoundNum() == 200) {
-			for(int i = 0; i < pastrLocations.size(); i++) {
-				System.out.println(pastrLocations.get(i).x + " " + pastrLocations.get(i).y);
-			}
-		}
+//		if (Clock.getRoundNum() == 200) {
+//			for(int i = 0; i < pastrLocations.size(); i++) {
+//				System.out.println(pastrLocations.get(i).x + " " + pastrLocations.get(i).y);
+//			}
+//		}
 	}
 	
 	/**
@@ -113,11 +119,8 @@ public class RobotPlayer {
 	 * This method should only be called by the HQ.
 	 */
 	private static void generateBestPastrLocNearMeBasedOnCowGrowthRate(int radius) {
-		if (Clock.getRoundNum() < 1) {
-			allCowGrowths = rc.senseCowGrowth();			
-		}
 		MapLocation bestLocation = new MapLocation(curLoc.x, curLoc.y);
-		
+
 		while (pastrLocations.size() < NUMBER_OF_PASTURES_TO_BUILD) {
 			double cowGrowthAmount = 0;
 			checkAllSquares:
@@ -125,18 +128,17 @@ public class RobotPlayer {
 				checkRows:
 				for (int j = radius * 2; j-- > 0;) {
 					// Check that it's in bounds
-					if (curLoc.x - i + radius >= 0 && curLoc.x - i + radius < rc.getMapWidth() &&
-						curLoc.y - j + radius >= 0 && curLoc.y - j + radius < rc.getMapHeight()) {
-						MapLocation mapLoc = new MapLocation(curLoc.x - i + radius, curLoc.y - j + radius);
+					MapLocation mapLoc = new MapLocation(curLoc.x - i + radius, curLoc.y - j + radius);
+					TerrainTile tile = rc.senseTerrainTile(mapLoc);
+					if (tile == TerrainTile.NORMAL || tile == TerrainTile.ROAD) {
 						for (int k = pastrLocations.size(); k-- > 0;) {
 							if (pastrLocations.get(k).distanceSquaredTo(mapLoc) < 10) {
 								continue checkRows;
 							}
 						}
 						double currentLocGrowth = sumCowGrowthsInPotentialPASTRAroundPoint(mapLoc);
-						System.out.println(mapLoc.x + " " + mapLoc.y + " " + i + " " + j + " " + cowGrowthAmount);
-						if (currentLocGrowth > cowGrowthAmount && 
-							rc.senseTerrainTile(mapLoc) != TerrainTile.VOID) {
+//						System.out.println(mapLoc.x + " " + mapLoc.y + " " + i + " " + j + " " + cowGrowthAmount);
+						if (currentLocGrowth > cowGrowthAmount) {
 							cowGrowthAmount = currentLocGrowth;
 							bestLocation = mapLoc;
 						}
@@ -169,9 +171,8 @@ public class RobotPlayer {
 		// Checking the three horizontal rows
 		for (int i = 5; i-- > 0;) {
 			for (int j = 3; j-- > 0;) {
-				if (ml.x - i + 2 >= 0 && ml.x - i + 2 < rc.getMapWidth() &&
-					ml.y - j + 1 >= 0 && ml.y - j + 1 < rc.getMapHeight() && 
-					rc.senseTerrainTile(new MapLocation(ml.x - i + 2, ml.y - j + 1)) != TerrainTile.VOID) {
+				TerrainTile tile = rc.senseTerrainTile(new MapLocation(ml.x - i + 2, ml.y - j + 1));
+				if (tile == TerrainTile.NORMAL || tile == TerrainTile.ROAD) {
 					sum += allCowGrowths[ml.x - i + 2][ml.y - j + 1];
 				}
 			}
