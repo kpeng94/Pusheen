@@ -29,6 +29,6 @@ public abstract class UnitHandler {
 	}
 	
 	/* Executes every round */
-	public abstract void execute();
+	public abstract void execute() throws GameActionException;
 	
 }

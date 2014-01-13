@@ -1,6 +1,6 @@
 package genericplayer;
 
-import battlecode.common.RobotController;
+import battlecode.common.*;
 
 public class PastrHandler extends UnitHandler {
 
@@ -9,7 +9,7 @@ public class PastrHandler extends UnitHandler {
 	}
 
 	@Override
-	public void execute() {
+	public void execute() throws GameActionException{
 
 	}
 

@@ -1,6 +1,6 @@
 package genericplayer;
 
-import battlecode.common.RobotController;
+import battlecode.common.*;
 
 public class NoisetowerHandler extends UnitHandler {
 
@@ -9,7 +9,7 @@ public class NoisetowerHandler extends UnitHandler {
 	}
 
 	@Override
-	public void execute() {
+	public void execute() throws GameActionException{
 
 	}
 
