@@ -85,23 +85,12 @@ public class Navigation {
 		if (!pathDone) {
 			simpleCalculate();
 		}
+		backTrace(rc.getLocation());
 	}
 	
 	/* Complex movement */
 	public static void complexMove() throws GameActionException {
 		
-	}
-	
-	private static void updateAdjacent(int loc, int amount) {
-		int dist = mapinfo[loc] + amount;
-		for (int i = 8; i-- > 0;) {
-			int intloc = loc + intdirs[i];
-			if (intloc >= 0 && intloc < width * height) {
-				if ((mapinfo[intloc] / 100000) > dist) {
-					mapinfo[intloc] = (dist * 100000) + ((i + 4) % 8) + 1;
-				}
-			}
-		}
 	}
 	
 	/* Calculates paths during idle time */
@@ -115,8 +104,9 @@ public class Navigation {
 	}
 	
 	public static void simpleCalculate() {
-		while (Clock.getBytecodesLeft() > 1000) {
+		while (Clock.getBytecodesLeft() > 2000) {
 			if (curCheck.distanceSquaredTo(dest) <= radius) {
+				pathDone = true;
 				return;
 			}
 			int toDest = curCheck.directionTo(dest).ordinal();
@@ -127,7 +117,7 @@ public class Navigation {
 			
 			for (int i = 8; i-- > 0;) {
 				MapLocation next = curCheck.add(dir[(toDest + reversedLooks[i] + 8) % 8]);
-				int roundNum = (mapinfo[toInt(next)] % 100000) / 9;
+				int roundNum = (mapinfo[toInt(next)] % 90000) / 9;
 				TerrainTile tile = rc.senseTerrainTile(next);
 				if (tile == TerrainTile.VOID || tile == TerrainTile.OFF_MAP) {
 					continue;
@@ -155,6 +145,36 @@ public class Navigation {
 				mapinfo[toInt(curCheck)] += checkNum * 9;
 				checkNum++;
 			}
+		}
+	}
+	
+	private static void updateAdjacent(int loc, int amount) {
+		int dist = (mapinfo[loc] / 90000) + amount;
+		for (int i = 8; i-- > 0;) {
+			int intloc = loc + intdirs[i];
+			if (intloc >= 0 && intloc < width * height) {
+				int oldDist = mapinfo[intloc] / 90000;
+				if (oldDist == 0 || oldDist > dist) {
+					mapinfo[intloc] = (dist * 90000) + ((i + 4) % 8) + 1;
+				}
+			}
+		}
+	}
+	
+	private static void backTrace(MapLocation startPos) throws GameActionException {
+		int start = toInt(startPos);
+		int end = toInt(curCheck);
+		int backDir = 0;
+		while (end != start) {
+			backDir = (mapinfo[end] % 9) - 1;
+			end += intdirs[backDir];
+		}
+		
+		Direction moveDir = dir[(backDir + 4) % 8];
+		if (rc.canMove(moveDir)) {
+			mapinfo[start] = 90000 + (checkNum * 9) + (backDir + 4) % 8 + 1;
+			checkNum++;
+			rc.move(moveDir);
 		}
 	}
 	
