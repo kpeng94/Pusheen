@@ -29,6 +29,17 @@ public abstract class UnitHandler {
 	}
 	
 	/* Executes every round */
-	public abstract void execute() throws GameActionException;
+	public void execute() throws GameActionException {
+		if (id != 0) {
+			broadcastSelf();
+		}
+	}
+	
+	/* Broadcasts unit's own position and round number */
+	private void broadcastSelf() throws GameActionException {
+		MapLocation curLoc = rc.getLocation();
+		int intLoc = (curLoc.x << 7) + curLoc.y;
+		rc.broadcast(100 * id, (intLoc << 11) + Clock.getRoundNum());
+	}
 	
 }

@@ -10,7 +10,7 @@ public class NoisetowerHandler extends UnitHandler {
 
 	@Override
 	public void execute() throws GameActionException{
-
+		super.execute();
 	}
 
 }
