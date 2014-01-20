@@ -8,8 +8,6 @@ public class SoldierHandler extends UnitHandler {
 
 	static Robot[] nearbyEnemies;
 	static Robot[] attackableEnemies;
-	static Rand rand; // Random number generator
-	static RobotController rc; // Robot Controller
 	static MapLocation enemyHQ; // Location of enemy HQ
 	static MapLocation teamHQ; // Location of team HQ
 	static MapLocation swarmLoc;
