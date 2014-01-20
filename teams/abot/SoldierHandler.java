@@ -10,7 +10,7 @@ public class SoldierHandler extends UnitHandler {
 	}
 
 	@Override
-	public void execute() throws GameActionException{
+	public void execute() throws GameActionException {
 		super.execute();
 		if (!Navigation.mapDone) {
 			if (rc.readBroadcast(1) == 1)
@@ -35,13 +35,14 @@ public class SoldierHandler extends UnitHandler {
 	}
 	
 	/* Attempts to attack */
-	private void tryAttack() {
+	private void tryAttack() throws GameActionException {
 		
 	}
 	
 	/* Attempts to move */
-	private void tryMove() {
-		Navigation.swarmMove(4);
+	private void tryMove() throws GameActionException {
+//		Navigation.swarmMove(4);
+		Navigation.trivialMove(rc.senseEnemyHQLocation());
 	}
 	
 	/* Does calculations */

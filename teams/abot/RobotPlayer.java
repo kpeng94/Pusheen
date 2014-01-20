@@ -27,7 +27,7 @@ public class RobotPlayer {
 				unit.execute();
 			}
 			catch (Exception e) {
-//				e.printStackTrace();
+				e.printStackTrace();
 				System.out.println(rc.getType() + " Exception");
 			}
 			rc.yield(); // Yields to save remaining bytecodes
