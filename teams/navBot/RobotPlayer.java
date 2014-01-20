@@ -1,4 +1,4 @@
-package abot;
+package navBot;
 
 import battlecode.common.*;
 

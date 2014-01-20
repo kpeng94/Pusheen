@@ -1,10 +1,10 @@
-package abot;
+package navBot;
 
 import battlecode.common.*;
 
-public class PastrHandler extends UnitHandler {
+public class NoisetowerHandler extends UnitHandler {
 
-	public PastrHandler(RobotController rcin) {
+	public NoisetowerHandler(RobotController rcin) {
 		super(rcin);
 	}
 

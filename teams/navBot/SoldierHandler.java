@@ -1,4 +1,4 @@
-package abot;
+package navBot;
 
 import battlecode.common.*;
 
@@ -6,7 +6,7 @@ public class SoldierHandler extends UnitHandler {
 
 	public SoldierHandler(RobotController rcin) {
 		super(rcin);
-		Navigation.init(rc, rc.senseEnemyHQLocation());
+		Navigation.init(rc, rc.senseEnemyHQLocation(), 4);
 	}
 
 	@Override
@@ -41,13 +41,12 @@ public class SoldierHandler extends UnitHandler {
 	
 	/* Attempts to move */
 	private void tryMove() throws GameActionException {
-//		Navigation.swarmMove(4);
-		Navigation.trivialMove(rc.senseEnemyHQLocation());
+		Navigation.swarmMove();
 	}
 	
 	/* Does calculations */
 	private void calculate() {
-		
+		Navigation.calculate();
 	}
 
 }

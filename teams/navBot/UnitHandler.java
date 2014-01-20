@@ -1,4 +1,4 @@
-package abot;
+package navBot;
 
 import battlecode.common.*;
 
@@ -13,6 +13,7 @@ public abstract class UnitHandler {
 	protected Rand rand; // Random number generator
 	protected RobotController rc; // Robot Controller
 	protected int id;
+	protected int round;
 	
 	/* Initializes information during spawn */
 	public UnitHandler(RobotController rcin) {
@@ -37,9 +38,10 @@ public abstract class UnitHandler {
 	
 	/* Broadcasts unit's own position and round number */
 	private void broadcastSelf() throws GameActionException {
+		round = Clock.getRoundNum();
 		MapLocation curLoc = rc.getLocation();
 		int intLoc = (curLoc.x << 7) + curLoc.y;
-		rc.broadcast(100 * id, (intLoc << 11) + Clock.getRoundNum());
+		rc.broadcast(100 * id, (intLoc << 11) + round);
 	}
 	
 }
