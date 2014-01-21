@@ -6,7 +6,7 @@ public class SoldierHandler extends UnitHandler {
 
 	public SoldierHandler(RobotController rcin) {
 		super(rcin);
-		Navigation.init(rc, rc.senseEnemyHQLocation(), 4);
+		Navigation.init(rc, rc.senseEnemyHQLocation(), 25);
 	}
 
 	@Override

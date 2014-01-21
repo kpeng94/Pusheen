@@ -20,7 +20,7 @@ public class HQHandler extends UnitHandler {
 	private void getSpawn() {
 		spawnlist = new int[8];
 		
-		int fromEnemy = enemyLoc.directionTo(ourLoc).ordinal();
+		int fromEnemy = ourLoc.directionTo(enemyLoc).ordinal();
 		int[] rot = new int[] {4, -3, 3, -2, 2, -1, 1, 0};
 		for (int i = 8; i-- > 0;) {
 			spawnlist[i] = (fromEnemy + rot[i] + 8) % 8;
@@ -30,7 +30,7 @@ public class HQHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
-		if (rc.isActive() && rc.senseRobotCount() < 1) {
+		if (rc.isActive() && rc.senseRobotCount() < 25) {
 			trySpawn();
 		}
 		tryAttack();
@@ -46,7 +46,6 @@ public class HQHandler extends UnitHandler {
 				continue;
 			}
 			if (rc.senseObjectAtLocation(spawnLoc) == null) {
-				System.out.println(dir[spawnlist[i]]);
 				rc.spawn(dir[spawnlist[i]]);
 				return;
 			}

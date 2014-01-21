@@ -1,5 +1,7 @@
 package navBot;
 
+import java.util.ArrayList;
+
 import battlecode.common.*;
 
 public class Navigation {
@@ -20,6 +22,9 @@ public class Navigation {
 	public static MapLocation dest; // Destination location
 	public static int radius; // Radius to swarm around destination
 	public static int[] mapinfo; // Explored map info
+	
+	public static int[] path;
+	public static int curPathPos;
 	
 	public static MapLocation curCheck;
 	public static int checkNum;
@@ -90,9 +95,15 @@ public class Navigation {
 	/* Simple movement */
 	public static void simpleMove() throws GameActionException {
 		if (!pathDone) {
-			simpleCalculate();
+			simpleCalculate(5000);
+			backTrace(rc.getLocation());
 		}
-		backTrace(rc.getLocation());
+		else if (curPathPos >= 0) {
+			pathMove();
+		}
+		else {
+			trivialMove(dest, reversedAll);
+		}
 	}
 	
 	/* Complex movement */
@@ -111,9 +122,12 @@ public class Navigation {
 	}
 	
 	public static void simpleCalculate() {
-		while (Clock.getBytecodesLeft() > 2500) {
+		simpleCalculate(2500);
+	}
+	
+	public static void simpleCalculate(int bytelimit) {
+		while (Clock.getBytecodesLeft() > bytelimit) {
 			if (curCheck.distanceSquaredTo(dest) <= radius) {
-				pathDone = true;
 				return;
 			}
 			int toDest = curCheck.directionTo(dest).ordinal();
@@ -124,9 +138,11 @@ public class Navigation {
 			
 			for (int i = 8; i-- > 0;) {
 				MapLocation next = curCheck.add(dir[(toDest + reversedAll[i] + 8) % 8]);
-				// WTF IS GOING ON??? Uncomment next line: code works, comment next line: code crashes
-//				System.out.println("hi");
-				int roundNum = (mapinfo[toInt(next)] % 90000) / 9;
+				int intloc = toInt(next);
+				if (intloc < 0 || intloc > width * height) {
+					continue;
+				}
+				int roundNum = (mapinfo[intloc] % 90000) / 9;
 				TerrainTile tile = rc.senseTerrainTile(next);
 				if (!isValid(next, tile)) {
 					continue;
@@ -171,20 +187,38 @@ public class Navigation {
 	}
 	
 	private static void backTrace(MapLocation startPos) throws GameActionException {
+		if (curCheck.distanceSquaredTo(dest) <= radius) {
+			pathDone = true;
+		}
 		int start = toInt(startPos);
 		int end = toInt(curCheck);
-		int backDir = 0;
-		while (end != start) {
-			backDir = (mapinfo[end] % 9) - 1;
-			end += intdirs[backDir];
+		curPathPos = 0;
+		path = new int[width + height];
+		path[curPathPos] = end;
+		
+		while (intDist(start, end) > 8 && curPathPos + 1 < path.length) {
+			end += intdirs[(mapinfo[end] % 9) - 1];
+			end += intdirs[(mapinfo[end] % 9) - 1];
+			curPathPos++;
+			path[curPathPos] = end;
 		}
 		
-		Direction moveDir = dir[(backDir + 4) % 8];
+		pathMove();
 		
-		if (rc.canMove(moveDir)) {
-			mapinfo[start] = 90000 + (checkNum * 9) + (backDir + 4) % 8 + 1;
-			checkNum++;
-			rc.move(moveDir);
+//		Direction moveDir = dir[(backDir + 4) % 8];
+//		
+//		if (rc.canMove(moveDir)) {
+//			mapinfo[start] = 90000 + (checkNum * 9) + (backDir + 4) % 8 + 1;
+//			checkNum++;
+//			rc.move(moveDir);
+//		}
+	}
+	
+	private static void pathMove() throws GameActionException {
+		MapLocation pos = fromInt(path[curPathPos]);
+		trivialMove(pos, reversedAll);
+		if (rc.getLocation().distanceSquaredTo(pos) < 9) {
+			curPathPos--;
 		}
 	}
 	
@@ -197,6 +231,16 @@ public class Navigation {
 	
 	public static void complexCalculate() {
 		
+	}
+	
+	public static int intDist(int pos1, int pos2) {
+		int xdiff = (pos1 / height) - (pos2 / height);
+		int ydiff = (pos1 % height) - (pos2 % height);
+		return xdiff * xdiff + ydiff * ydiff;
+	}
+	
+	public static MapLocation fromInt(int loc) {
+		return new MapLocation(loc / height, loc % height);
 	}
 	
 	public static int toInt(MapLocation loc) {
