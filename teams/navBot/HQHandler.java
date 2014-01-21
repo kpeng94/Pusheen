@@ -21,12 +21,9 @@ public class HQHandler extends UnitHandler {
 		spawnlist = new int[8];
 		
 		int fromEnemy = enemyLoc.directionTo(ourLoc).ordinal();
-		spawnlist[0] = fromEnemy + ((fromEnemy + 1) % 2);
-		spawnlist[1] = fromEnemy - (fromEnemy % 2);
-		int[] rot90 = new int[] {4, -2, 2};
-		for (int i = 3; i-- > 0;) {
-			spawnlist[2+i] = (spawnlist[0] + rot90[i] + 8) % 8;
-			spawnlist[5+i] = (spawnlist[1] + rot90[i] + 8) % 8;
+		int[] rot = new int[] {4, -3, 3, -2, 2, -1, 1, 0};
+		for (int i = 8; i-- > 0;) {
+			spawnlist[i] = (fromEnemy + rot[i] + 8) % 8;
 		}
 	}
 	
@@ -43,7 +40,13 @@ public class HQHandler extends UnitHandler {
 	/* Tries to spawn a unit based on spawnlist */
 	private void trySpawn() throws GameActionException {
 		for (int i = spawnlist.length; i-- > 0;) {
-			if (rc.senseObjectAtLocation(ourLoc.add(dir[spawnlist[i]])) == null) {
+			MapLocation spawnLoc = ourLoc.add(dir[spawnlist[i]]);
+			TerrainTile tile = rc.senseTerrainTile(spawnLoc);
+			if (tile == TerrainTile.OFF_MAP || tile == TerrainTile.VOID) {
+				continue;
+			}
+			if (rc.senseObjectAtLocation(spawnLoc) == null) {
+				System.out.println(dir[spawnlist[i]]);
 				rc.spawn(dir[spawnlist[i]]);
 				return;
 			}

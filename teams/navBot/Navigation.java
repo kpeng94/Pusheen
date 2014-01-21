@@ -4,12 +4,15 @@ import battlecode.common.*;
 
 public class Navigation {
 	static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
-	static final int[] reversedLooks = new int[] {4, -3, 3, -2, 2, -1, 1, 0};
+	static final int[] reversedAll = new int[] {4, -3, 3, -2, 2, -1, 1, 0};
+	static final int[] reversedForward = new int[] {-1, 1, 0};
 	
 	public static int[] intdirs;
 	public static RobotController rc;
 	public static int width;
 	public static int height;
+	public static MapLocation ourHQ;
+	public static MapLocation enemyHQ;
 
 	public static boolean mapDone; // Able to use complex movement with HQ map
 
@@ -33,6 +36,10 @@ public class Navigation {
 		width = rc.getMapWidth();
 		height = rc.getMapHeight();
 		intdirs = new int[] {-1, height - 1, height, height + 1, 1, 1 - height, -height, -1 - height};
+		
+		ourHQ = rc.senseHQLocation();
+		enemyHQ = rc.senseEnemyHQLocation();
+		
 		if (defaultLoc != null) {
 			setDest(defaultLoc, radius);
 		}
@@ -69,10 +76,10 @@ public class Navigation {
 	}
 	
 	/* Trivial movement */
-	public static void trivialMove(MapLocation mapLoc) throws GameActionException {
+	public static void trivialMove(MapLocation mapLoc, int[] looks) throws GameActionException {
 		int toDest = rc.getLocation().directionTo(mapLoc).ordinal();
-		for (int i = 8; i-- > 0;) {
-			Direction moveDir = dir[(toDest + reversedLooks[i] + 8) % 8];
+		for (int i = looks.length; i-- > 0;) {
+			Direction moveDir = dir[(toDest + looks[i] + 8) % 8];
 			if (rc.canMove(moveDir)) {
 				rc.move(moveDir);
 				return;
@@ -104,7 +111,7 @@ public class Navigation {
 	}
 	
 	public static void simpleCalculate() {
-		while (Clock.getBytecodesLeft() > 2000) {
+		while (Clock.getBytecodesLeft() > 2500) {
 			if (curCheck.distanceSquaredTo(dest) <= radius) {
 				pathDone = true;
 				return;
@@ -116,10 +123,12 @@ public class Navigation {
 			boolean minRoad = false;
 			
 			for (int i = 8; i-- > 0;) {
-				MapLocation next = curCheck.add(dir[(toDest + reversedLooks[i] + 8) % 8]);
+				MapLocation next = curCheck.add(dir[(toDest + reversedAll[i] + 8) % 8]);
+				// WTF IS GOING ON??? Uncomment next line: code works, comment next line: code crashes
+//				System.out.println("hi");
 				int roundNum = (mapinfo[toInt(next)] % 90000) / 9;
 				TerrainTile tile = rc.senseTerrainTile(next);
-				if (tile == TerrainTile.VOID || tile == TerrainTile.OFF_MAP) {
+				if (!isValid(next, tile)) {
 					continue;
 				}
 				if (roundNum == 0) {
@@ -171,11 +180,19 @@ public class Navigation {
 		}
 		
 		Direction moveDir = dir[(backDir + 4) % 8];
+		
 		if (rc.canMove(moveDir)) {
 			mapinfo[start] = 90000 + (checkNum * 9) + (backDir + 4) % 8 + 1;
 			checkNum++;
 			rc.move(moveDir);
 		}
+	}
+	
+	private static boolean isValid(MapLocation loc, TerrainTile tile) {
+		if ((loc.x == ourHQ.x) && (loc.y == ourHQ.y)) {
+			return false;
+		}
+		return tile == TerrainTile.NORMAL || tile == TerrainTile.ROAD;
 	}
 	
 	public static void complexCalculate() {
