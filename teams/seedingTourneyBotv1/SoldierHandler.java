@@ -236,7 +236,13 @@ public class SoldierHandler extends UnitHandler {
 			rc.broadcast(30000, id);
 		} else if (rc.readBroadcast(30000) == id) {
 			// Change this later if they are not going in order
-			if (rc.readBroadcast(20002) != 0 && destination.x == rc.getLocation().x &&
+			int count = 0;
+			for (int i = 5; i-- > 0;) {
+				if (rc.readBroadcast(20000 + i) != 0) {
+					count++;
+				}
+			}
+			if (count >= 3 && destination.x == rc.getLocation().x &&
 				destination.y == rc.getLocation().y && rc.isActive()) {
 				rc.construct(RobotType.PASTR);
 			}
