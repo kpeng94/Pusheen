@@ -81,10 +81,11 @@ public class Navigation {
 	
 	/* Trivial movement */
 	public static void trivialMove(MapLocation mapLoc, int[] looks) throws GameActionException {
-		int toDest = rc.getLocation().directionTo(mapLoc).ordinal();
+		MapLocation curLoc = rc.getLocation();
+		int toDest = curLoc.directionTo(mapLoc).ordinal();
 		for (int i = looks.length; i-- > 0;) {
 			Direction moveDir = dir[(toDest + looks[i] + 8) % 8];
-			if (rc.canMove(moveDir)) {
+			if (rc.canMove(moveDir) && curLoc.add(moveDir).distanceSquaredTo(enemyHQ) > 25) {
 				rc.move(moveDir);
 				return;
 			}
