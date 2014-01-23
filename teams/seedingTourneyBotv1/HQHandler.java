@@ -8,7 +8,9 @@ public class HQHandler extends UnitHandler {
 	MapLocation ourLoc;
 	MapLocation enemyLoc;
 	int[] spawnlist;
-	
+	int numberOfRobots = 0;
+	int numberOfNoiseTowers = 0;
+
 	public HQHandler(RobotController rcin) {
 		super(rcin);
 		ourLoc = rc.senseHQLocation();
@@ -31,6 +33,23 @@ public class HQHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
+		
+//	  if (rc.readBroadcast(15000) != Clock.getRoundNum() - 1) {
+//		  System.out.println("broadcast read: " + rc.readBroadcast(15000));
+//		  System.out.println("round number: " + Clock.getRoundNum());
+//	    rc.broadcast(30000, 0);
+//	  } else if (rc.readBroadcast(15001) != Clock.getRoundNum() - 1) {
+//	    rc.broadcast(20000, 0);
+//	  } else if (rc.readBroadcast(15002) != Clock.getRoundNum() - 1) {
+//	    rc.broadcast(20001, 0);
+//	  } else if (rc.readBroadcast(15003) != Clock.getRoundNum() - 1) {
+//	    rc.broadcast(20002, 0);
+//	  } else if (rc.readBroadcast(15004) != Clock.getRoundNum() - 1) {
+//	    rc.broadcast(20003, 0);
+//	  } else if (rc.readBroadcast(15005) != Clock.getRoundNum() - 1) {
+//	  	rc.broadcast(20004, 0);
+//	  }
+	 
 		if (rc.isActive() && rc.senseRobotCount() < 25) {
 			trySpawn();
 		}
@@ -48,6 +67,7 @@ public class HQHandler extends UnitHandler {
 			}
 			if (rc.senseObjectAtLocation(spawnLoc) == null) {
 				rc.spawn(dir[spawnlist[i]]);
+				numberOfRobots++;
 				return;
 			}
 		}

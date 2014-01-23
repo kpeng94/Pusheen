@@ -11,6 +11,7 @@ public class SoldierHandler extends UnitHandler {
 	public static boolean readCowMap = false;
 	public static int targetLoc = 0;
 	public static boolean reachedDestination = false;
+	public static boolean shouldRushEnemyPASTR = false;
 	
 	public SoldierHandler(RobotController rcin) {
 		super(rcin);
@@ -24,6 +25,8 @@ public class SoldierHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
+
+		
 		if (!Navigation.mapDone) {
 			if (rc.readBroadcast(1) == 1)
 				Navigation.mapDone = true;
@@ -44,8 +47,9 @@ public class SoldierHandler extends UnitHandler {
 				buildPASTR(pastrLocation);				
 			} else {
 				if (!reachedDestination) {
-					goToPASTR(pastrLocation, dir);					
+					goToPASTR(pastrLocation, dir);
 				}
+				checkIfShouldRushEnemyPASTR();
 			}
 		}			
 		// There is a location for the PASTR we want to build.
@@ -53,8 +57,7 @@ public class SoldierHandler extends UnitHandler {
 		if (rc.isActive()) {
 			if (shouldAttack()) {
 				tryAttack();
-			}
-			else {
+			} else {
 //				add destination check
 				if (targetLocation.x != -1 && (rc.getLocation().x != targetLocation.x || 
 											   rc.getLocation().y != targetLocation.y)) {
@@ -80,6 +83,9 @@ public class SoldierHandler extends UnitHandler {
 	
 	/* Attempts to attack */
 	private void tryAttack() throws GameActionException {
+		if (shouldRushEnemyPASTR) {
+			attackEnemyPASTRMicro();
+		}
 		if(rc.canAttackSquare(prioritizedEnemy) && rc.getActionDelay() <= 1) {
 			rc.attackSquare(prioritizedEnemy);
 		}			
@@ -146,7 +152,7 @@ public class SoldierHandler extends UnitHandler {
 	}
 	
 	public MapLocation prioritizeTarget(Robot[] nearbyEnemies) throws GameActionException {
-		double health = 110;
+		double health = 1000;
 		MapLocation lowestHealthTargetLocation = rc.senseEnemyHQLocation();
 		for (int i = nearbyEnemies.length; i-- > 0;) {
 			RobotInfo info = rc.senseRobotInfo(nearbyEnemies[i]);
@@ -157,13 +163,76 @@ public class SoldierHandler extends UnitHandler {
 		}
 		return lowestHealthTargetLocation;
 	}
-	
-	private void attackEnemyPASTR() {
+
+	private void checkIfShouldRushEnemyPASTR() {
 		// Attack should be only if enemy has more pastrs than we do.
 		// (2+ enemy pastrs, when we only have 1)
-		if (rc.sensePastrLocations(rc.getTeam().opponent()).length >= 2) {
-			
+		if (!shouldRushEnemyPASTR) {
+			MapLocation[] enemyPASTRs = rc.sensePastrLocations(rc.getTeam().opponent());
+			if (enemyPASTRs.length >= 2) {
+				shouldRushEnemyPASTR = true;
+				int farthestDist = enemyPASTRs[enemyPASTRs.length - 1].distanceSquaredTo(enemyHQLocation);
+				MapLocation farthestPASTRFromTheirHQ = enemyPASTRs[enemyPASTRs.length - 1];
+				for (int i = enemyPASTRs.length - 1; i-- > 0;) {
+					int newDist = enemyPASTRs[i].distanceSquaredTo(enemyHQLocation);
+					if (newDist > farthestDist) {
+						farthestDist = newDist;
+						farthestPASTRFromTheirHQ = enemyPASTRs[i];
+					}
+				}
+//				System.out.println("omgomgomg");
+//				System.out.println("their farthest: " + farthestPASTRFromTheirHQ);
+//				System.out.println(reachedDestination);
+				targetLocation = farthestPASTRFromTheirHQ;
+				Navigation.setDest(farthestPASTRFromTheirHQ, 9);
+			} else if (Clock.getRoundNum() % 10 == 0 && rc.senseTeamMilkQuantity(rc.getTeam().opponent()) > 
+												 rc.senseTeamMilkQuantity(rc.getTeam())) {
+				shouldRushEnemyPASTR = true;
+				if (enemyPASTRs.length >= 1) {
+					Navigation.setDest(enemyPASTRs[0], 9);
+					targetLocation = enemyPASTRs[0];
+				}
+			}
 		}
 	}
 	
+	private void attackEnemyPASTRMicro() throws GameActionException {	
+		// Prioritize points in enemy PASTR with a lot of cows
+		MapLocation[] enemyPASTRLocations = rc.sensePastrLocations(rc.getTeam().opponent());
+		for (int i = enemyPASTRLocations.length; i-- > 0;) {
+			MapLocation location = enemyPASTRLocations[i];
+			if (location.distanceSquaredTo(rc.getLocation()) > 35) {
+				continue;
+			} else {
+				for (int j = 5; j-- > 0;) {
+					for (int k = 5; k-- > 0;) {
+						MapLocation locationInEnemyPASTR = new MapLocation(location.x - j + 2, location.y - k + 2);
+						if (rc.canSenseSquare(locationInEnemyPASTR)) {
+							double cowsNearEnemy = rc.senseCowsAtLocation(locationInEnemyPASTR);
+							if (cowsNearEnemy >= 2000 && rc.canAttackSquare(locationInEnemyPASTR)) {
+								rc.attackSquare(locationInEnemyPASTR);
+							}
+						}
+					}
+				}
+			}
+		// Prioritize attacking enemies first, because if we don't do that, the enemy can deny the PASTR more easily.		
+		}		
+	}
+
+	private void checkToFillSpots() throws GameActionException {
+		if (rc.readBroadcast(30000) == id) {
+		    rc.broadcast(15000, Clock.getRoundNum());
+    	} else if (rc.readBroadcast(20000) == id) {
+		    rc.broadcast(15001, Clock.getRoundNum());
+		} else if (rc.readBroadcast(20001) == id) {
+		    rc.broadcast(15002, Clock.getRoundNum());
+		} else if (rc.readBroadcast(20002) == id) {
+		    rc.broadcast(15003, Clock.getRoundNum());
+		} else if (rc.readBroadcast(20003) == id) {
+		    rc.broadcast(15004, Clock.getRoundNum());
+		} else if (rc.readBroadcast(20004) == id) {
+		    rc.broadcast(15005, Clock.getRoundNum());
+		}
+	}
 }
