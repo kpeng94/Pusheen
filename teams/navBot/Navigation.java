@@ -1,13 +1,12 @@
 package navBot;
 
-import java.util.ArrayList;
-
 import battlecode.common.*;
 
 public class Navigation {
 	static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
 	static final int[] reversedAll = new int[] {4, -3, 3, -2, 2, -1, 1, 0};
 	static final int[] reversedForward = new int[] {-1, 1, 0};
+	static final int checkDist = 4;
 	
 	public static int[] intdirs;
 	public static RobotController rc;
@@ -196,7 +195,7 @@ public class Navigation {
 		path = new int[width + height];
 		path[curPathPos] = end;
 		
-		while (intDist(start, end) > 8 && curPathPos + 1 < path.length) {
+		while (intDist(start, end) > checkDist && curPathPos + 1 < path.length) {
 			end += intdirs[(mapinfo[end] % 9) - 1];
 			end += intdirs[(mapinfo[end] % 9) - 1];
 			curPathPos++;
@@ -217,7 +216,7 @@ public class Navigation {
 	private static void pathMove() throws GameActionException {
 		MapLocation pos = fromInt(path[curPathPos]);
 		trivialMove(pos, reversedAll);
-		if (rc.getLocation().distanceSquaredTo(pos) < 9) {
+		if (rc.getLocation().distanceSquaredTo(pos) < checkDist + 1) {
 			curPathPos--;
 		}
 	}
