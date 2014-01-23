@@ -95,6 +95,105 @@ public class HQHandler extends UnitHandler {
 	/* Do calculations with leftover bytecode */
 	private void calculate() throws GameActionException {
 		CowMap.calculate();
+		calculateGoodPointsNearbyToGoTo();
 	}
-
+	
+	/**
+	 * 
+	 * @throws GameActionException
+	 */
+	private void calculateGoodPointsNearbyToGoTo() throws GameActionException {
+		MapLocation ml;
+		switch (CowMap.bestLoc.directionTo(enemyLoc)) {
+			case WEST:
+				ml = CowMap.bestLoc.add(Direction.WEST, 3).add(Direction.SOUTH, 2);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 3).add(Direction.SOUTH, -2);
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 3).add(Direction.SOUTH, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 3).add(Direction.SOUTH, -1);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 3);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+			case NORTH:
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.WEST, 2);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.WEST, -2);
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.WEST, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.WEST, -1);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+			case SOUTH:
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.EAST, 2);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.EAST, -2);
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.EAST, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.EAST, -1);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+			case SOUTH_WEST:
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 4);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 4);				
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.WEST, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 1).add(Direction.WEST, 3);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 2).add(Direction.WEST, 2);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+			case NORTH_WEST:
+				ml = CowMap.bestLoc.add(Direction.NORTH, 4);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 4);				
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.WEST, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 1).add(Direction.WEST, 3);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 2).add(Direction.WEST, 2);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+			case NORTH_EAST:
+				ml = CowMap.bestLoc.add(Direction.NORTH, 4);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 4);				
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.EAST, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 1).add(Direction.EAST, 3);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 2).add(Direction.EAST, 2);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+			case SOUTH_EAST:
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 4);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 4);				
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.EAST, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 1).add(Direction.EAST, 3);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 2).add(Direction.EAST, 2);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+			case EAST:
+			default: 
+				ml = CowMap.bestLoc.add(Direction.EAST, 3).add(Direction.NORTH, 2);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 3).add(Direction.NORTH, -2);
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 3).add(Direction.NORTH, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 3).add(Direction.NORTH, -1);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 3);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+		}
+	}
 }

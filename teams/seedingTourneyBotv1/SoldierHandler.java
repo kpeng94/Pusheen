@@ -9,47 +9,53 @@ public class SoldierHandler extends UnitHandler {
 	public static MapLocation prioritizedEnemy; 
 	public static MapLocation targetLocation = new MapLocation(-1, -1);
 	public static boolean readCowMap = false;
-	public static int targetLoc = 0;
+	public static int bestCGRLoc = 0;
 	public static boolean reachedDestination = false;
 	public static boolean shouldRushEnemyPASTR = false;
+	public static MapLocation pastrLocation; // where we want to build the pastr
+	public static MapLocation[] enemyPASTRs; 
+	public static int channelClaimed = 0;
+	public static MapLocation closeToMe; 
+	public static boolean bumRushing;
 	
 	public SoldierHandler(RobotController rcin) {
 		super(rcin);
 		enemyHQLocation = rc.senseEnemyHQLocation();
 		myHQLocation = rc.senseHQLocation();
-		MapLocation targetLoc = new MapLocation((2 * myHQLocation.x + enemyHQLocation.x) / 3, 
+		closeToMe = new MapLocation((2 * myHQLocation.x + enemyHQLocation.x) / 3, 
 													 (2 * myHQLocation.y + enemyHQLocation.y) / 3);
-		Navigation.init(rc, targetLoc, 25);
+		Navigation.init(rc, closeToMe, 25);
 	}
 
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
 
-		
+		// Navigation for each soldier
 		if (!Navigation.mapDone) {
 			if (rc.readBroadcast(1) == 1)
 				Navigation.mapDone = true;
 		}
-
-		targetLoc = rc.readBroadcast(10);
-		if (targetLoc != 0) {
-			MapLocation pastrLocation = new MapLocation(targetLoc / 100, targetLoc % 100);
-			Direction dir = pastrLocation.directionTo(enemyHQLocation);
-			if (dir == Direction.OMNI || dir == Direction.NONE) {
-				dir = myHQLocation.directionTo(enemyHQLocation);
-			}			
-			if (dir == Direction.NORTH_EAST || dir == Direction.NORTH_WEST ||
-				dir == Direction.SOUTH_EAST || dir == Direction.SOUTH_WEST) {
-				dir = dir.rotateLeft();
-			} 
-			if (shouldBuildPASTR()) {
+		
+		// Keep checking for the best cow growth rate location until the HQ broadcasts it.
+		bestCGRLoc = rc.readBroadcast(10);
+		if (bestCGRLoc != 0) {
+			pastrLocation = new MapLocation(bestCGRLoc / 100, bestCGRLoc % 100);
+			int obj = decideObjective();
+			if (obj == 1) {
 				buildPASTR(pastrLocation);				
-			} else {
+			} else if (obj == 2) {
 				if (!reachedDestination) {
-					goToPASTR(pastrLocation, dir);
+					// If we have reached the destination (which can only be set true by the defendPASTR
+					// method, we don't need to move, we only need to stay put and attack when necessary
+					// for now).
+					defendPASTR();					
 				}
-				checkIfShouldRushEnemyPASTR();
+			} else if (obj == 3) {
+				bumRush();
+
+			} else {
+				tryToBeUseful();
 			}
 		}			
 		// There is a location for the PASTR we want to build.
@@ -58,7 +64,6 @@ public class SoldierHandler extends UnitHandler {
 			if (shouldAttack()) {
 				tryAttack();
 			} else {
-//				add destination check
 				if (targetLocation.x != -1 && (rc.getLocation().x != targetLocation.x || 
 											   rc.getLocation().y != targetLocation.y)) {
 					tryMove();					
@@ -69,7 +74,128 @@ public class SoldierHandler extends UnitHandler {
 		calculate();
 	}
 
+	/**
+	 * If we really don't know what to do right now, we can try to be useful.
+	 */
+	private void tryToBeUseful() {
+		targetLocation = closeToMe;
+		Navigation.setDest(targetLocation);		
+	}
+
+	/**
+	 * Determines what this robot should do.
+	 * 0 : dawdle, do nothing
+	 * 1 : build a PASTR at optimal PASTR location
+	 * 2 : defend the PASTR
+	 * 3 : bum rush enemy
+	 * @return 
+	 */
+	private int decideObjective() throws GameActionException {
+		if (shouldBuildPASTR()) {
+			return 1;
+		}
+		if (shouldBumRush()) {
+			return 3;
+		}
+		if (shouldDefendPASTR()) {
+			return 2;
+		} 
+		return 0;
+	}
 	
+	private boolean shouldBumRush() {
+		updateBumRushInfo();
+		if (bumRushing) {
+			if (enemyPASTRs.length >= 1) {
+				targetLocation = getMostVulnerableEnemyLocation();
+			}
+			return true;
+		}
+		if (enemyPASTRs.length == 0) {
+			bumRushing = false;
+		}
+		if (enemyPASTRs.length >= 2 || (Clock.getRoundNum() % 10 == 0 && rc.senseTeamMilkQuantity(rc.getTeam().opponent()) > 
+		 rc.senseTeamMilkQuantity(rc.getTeam()))) {	
+			// Attack the PASTR that is farthest from the enemy.
+			// Perhaps write some code later that will avoid HQs altogether.
+			targetLocation = getMostVulnerableEnemyLocation();
+			bumRushing = true;
+			reachedDestination = false;
+			return true; 
+		}
+		return false;
+	}
+
+	private void updateBumRushInfo() {
+		enemyPASTRs = rc.sensePastrLocations(rc.getTeam().opponent());		
+	}
+
+	/**
+	 * Set the navigation to the target location and reset whatever 
+	 * channels it previously promised that it was operating for.
+	 * @throws GameActionException
+	 */
+	private void bumRush() throws GameActionException {
+		Navigation.setDest(targetLocation, 10);
+	}
+
+	private MapLocation getMostVulnerableEnemyLocation() {
+		int farthestDist = enemyPASTRs[enemyPASTRs.length - 1].distanceSquaredTo(enemyHQLocation);
+		MapLocation farthestPASTRFromTheirHQ = enemyPASTRs[enemyPASTRs.length - 1];
+		for (int i = enemyPASTRs.length - 1; i-- > 0;) {
+			int newDist = enemyPASTRs[i].distanceSquaredTo(enemyHQLocation);
+			if (newDist > farthestDist) {
+				farthestDist = newDist;
+				farthestPASTRFromTheirHQ = enemyPASTRs[i];
+			}
+		}
+		return farthestPASTRFromTheirHQ;
+	}
+	/**
+	 * Resets channels that this robot was responsible for before.
+	 * This should only be called if the robot is changing its action 
+	 * (for example, from defending a pastr to bum rushing).
+	 * @throws GameActionException
+	 */
+	private void resetChannels() throws GameActionException {
+		for (int i = 5; i-- > 0;) {
+			if (rc.readBroadcast(20000 + i) == id) {
+				rc.broadcast(20000 + i, 0);
+			}
+			if (rc.readBroadcast(21000 + i) == id) {
+				rc.broadcast(21000 + i, 0);
+			}
+		}		
+	}
+
+	/**
+	 * Channels: 
+	 * 20000 - 20004: information about whether or not a robot has defended a position.
+	 * 21000 - 21004: information about whether or not a robot has claimed a position to defend.
+	 * 22000 - 22004: locations that will be defended by each of these bots respectively
+	 * 
+	 * If all channels have been claimed by an ID, there's no need to defend it.
+	 * @return
+	 * @throws GameActionException
+	 */
+	private boolean shouldDefendPASTR() throws GameActionException {
+		// We should defend the pastr in the early stages. We can check this by checking broadcast channels.
+		for (int i = 5; i-- > 0;) {
+			if (channelClaimed == 0 && rc.readBroadcast(21000 + i) == 0) {
+				int bc = rc.readBroadcast(22000 + i);
+				if (bc != 0) {
+					targetLocation = new MapLocation(bc / 100, bc % 100);
+					rc.broadcast(21000 + i, id);
+					channelClaimed = 21000 + i;
+					return true;
+				}
+			} else if (channelClaimed != 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/* Determines whether the robot should attack this turn */
 	private boolean shouldAttack() throws GameActionException {
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
@@ -117,36 +243,25 @@ public class SoldierHandler extends UnitHandler {
 		}		
 	}
 
-	/* used to check if this robot should be the one to build the pastr */
+	/* used to check if this robot should be the one to build the pastr 
+	 * The robot should basically build a pastr whenever one doesn't exist (ours got destroyed,
+	 * or beginning).
+	 */	
 	private boolean shouldBuildPASTR() throws GameActionException {
 		int bc = rc.readBroadcast(30000);
 		return bc == 0 || bc == id;
 	}
 	
-	private void goToPASTR(MapLocation pastrLoc, Direction dir) throws GameActionException {
+	private void defendPASTR() throws GameActionException {
 		// Locations to go to:
 		// pastrLoc + dir * 3 + dirRotated * -2, -1, 0, 1, 2
 		if (rc.readBroadcast(30000) != id) {
-			for (int i = 5; i-- > 0;) {
-				if (rc.readBroadcast(20000 + i) == 0) {				
-					targetLocation = pastrLoc.add(dir, 3).add(dir.rotateLeft().rotateLeft(), i - 2);
-					Navigation.setDest(targetLocation); 
-					break;
-				}
-			}
+			Navigation.setDest(targetLocation);
 			// If we reached the target location, broadcast to the channel		
 			if (targetLocation.x != -1 && (rc.getLocation().x == targetLocation.x &&
 										   rc.getLocation().y == targetLocation.y)) {
 				reachedDestination = true;
-				if (dir == Direction.EAST) {
-					rc.broadcast(20000 + pastrLoc.y - targetLocation.y + 2, id);
-				} else if (dir == Direction.WEST) {
-					rc.broadcast(20000 + targetLocation.y - pastrLoc.y + 2, id);
-				} else if (dir == Direction.NORTH) {
-					rc.broadcast(20000 + pastrLoc.x - targetLocation.x + 2, id);
-				} else if (dir == Direction.SOUTH) {
-					rc.broadcast(20000 + targetLocation.x - pastrLoc.x + 2, id);				
-				}
+				rc.broadcast(channelClaimed - 1000, id);
 			}			
 		}
 	}
@@ -180,9 +295,6 @@ public class SoldierHandler extends UnitHandler {
 						farthestPASTRFromTheirHQ = enemyPASTRs[i];
 					}
 				}
-//				System.out.println("omgomgomg");
-//				System.out.println("their farthest: " + farthestPASTRFromTheirHQ);
-//				System.out.println(reachedDestination);
 				targetLocation = farthestPASTRFromTheirHQ;
 				Navigation.setDest(farthestPASTRFromTheirHQ, 9);
 			} else if (Clock.getRoundNum() % 10 == 0 && rc.senseTeamMilkQuantity(rc.getTeam().opponent()) > 

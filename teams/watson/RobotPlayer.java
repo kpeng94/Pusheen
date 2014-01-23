@@ -23,7 +23,7 @@ public class RobotPlayer{
 				}
 				rc.yield();
 			}catch (Exception e){
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}
 	}
