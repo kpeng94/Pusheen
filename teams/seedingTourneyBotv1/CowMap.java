@@ -1,4 +1,4 @@
-package cowBot;
+package seedingTourneyBotv1;
 
 import battlecode.common.*;
 
@@ -70,7 +70,7 @@ public class CowMap {
 	private static void calculateBest() throws GameActionException {
 		while (Clock.getBytecodesLeft() > 1000) {
 			if (curPos < 0) {
-				rc.broadcast(10, bestLoc.x * 100 + bestLoc.y);
+				rc.broadcast(1, bestLoc.x * height + bestLoc.y);
 				bestDone = true;
 				return;
 			}
