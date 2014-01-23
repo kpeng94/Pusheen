@@ -22,15 +22,13 @@ public class SoldierHandler extends UnitHandler {
 //		}
 //		int lowestHealth = 1000;
 
-		if (rc.isActive()) {
-			if (makeDecision() == 0) {
-				MapLocation closestEnemy = getClosestEnemy(nearbyEnemies);
-				Direction moveDirection = myLoc.directionTo(closestEnemy);
-				if(closestEnemy.distanceSquaredTo(myLoc) <= 2) {
-					rc.selfDestruct();
-				} else {
-					BasicPathing.tryToMove(moveDirection, true, rc, directionalLooks, dir);					
-				}
+		if (makeDecision() == 0) {
+			MapLocation closestEnemy = getClosestEnemy(nearbyEnemies);
+			Direction moveDirection = myLoc.directionTo(closestEnemy);
+			if(closestEnemy.distanceSquaredTo(myLoc) <= 2) {
+				rc.selfDestruct();
+			} else if (rc.isActive()) {
+				BasicPathing.tryToMove(moveDirection, true, rc, directionalLooks, dir);					
 			}
 		}
 	}

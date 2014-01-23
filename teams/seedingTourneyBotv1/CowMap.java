@@ -70,7 +70,7 @@ public class CowMap {
 	private static void calculateBest() throws GameActionException {
 		while (Clock.getBytecodesLeft() > 1000) {
 			if (curPos < 0) {
-				rc.broadcast(1, bestLoc.x * height + bestLoc.y);
+				rc.broadcast(10, bestLoc.x * 100 + bestLoc.y);
 				bestDone = true;
 				return;
 			}

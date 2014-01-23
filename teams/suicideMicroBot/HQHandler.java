@@ -12,7 +12,7 @@ public class HQHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException{
 		MapLocation myLoc = rc.getLocation();
-		if (rc.isActive() && rc.senseRobotCount() < 25) {
+		if (Clock.getRoundNum() > 100 && rc.isActive() && rc.senseRobotCount() < 25) {
 			Direction spawnDir = dir[rand.nextAnd(7)];
 			if (rc.senseObjectAtLocation(myLoc.add(spawnDir)) == null)
 				rc.spawn(spawnDir);

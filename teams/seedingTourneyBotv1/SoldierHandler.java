@@ -10,6 +10,7 @@ public class SoldierHandler extends UnitHandler {
 	public static MapLocation targetLocation = new MapLocation(-1, -1);
 	public static boolean readCowMap = false;
 	public static int targetLoc = 0;
+	public static boolean reachedDestination = false;
 	
 	public SoldierHandler(RobotController rcin) {
 		super(rcin);
@@ -28,26 +29,25 @@ public class SoldierHandler extends UnitHandler {
 				Navigation.mapDone = true;
 		}
 
-		if (CowMap.mapDone) {
-			System.out.println("blah blah: " + targetLocation);
-			if (!readCowMap) {
-				targetLoc = rc.readBroadcast(10);
-				readCowMap = true;
-			}
-			if (targetLoc != 0) {
-				MapLocation pastrLocation = new MapLocation(targetLoc / 100, targetLoc % 100);
-				Direction dir = pastrLocation.directionTo(enemyHQLocation);
-				if (dir == Direction.OMNI || dir == Direction.NONE) {
-					dir = myHQLocation.directionTo(enemyHQLocation);
-				}			
-				if (dir == Direction.NORTH_EAST || dir == Direction.NORTH_WEST ||
-					dir == Direction.SOUTH_EAST || dir == Direction.SOUTH_WEST) {
-					dir = dir.rotateLeft();
-				} 
-				buildPASTR(pastrLocation);
-				goToPASTR(pastrLocation, dir);
+		targetLoc = rc.readBroadcast(10);
+		if (targetLoc != 0) {
+			MapLocation pastrLocation = new MapLocation(targetLoc / 100, targetLoc % 100);
+			Direction dir = pastrLocation.directionTo(enemyHQLocation);
+			if (dir == Direction.OMNI || dir == Direction.NONE) {
+				dir = myHQLocation.directionTo(enemyHQLocation);
 			}			
-		}
+			if (dir == Direction.NORTH_EAST || dir == Direction.NORTH_WEST ||
+				dir == Direction.SOUTH_EAST || dir == Direction.SOUTH_WEST) {
+				dir = dir.rotateLeft();
+			} 
+			if (shouldBuildPASTR()) {
+				buildPASTR(pastrLocation);				
+			} else {
+				if (!reachedDestination) {
+					goToPASTR(pastrLocation, dir);					
+				}
+			}
+		}			
 		// There is a location for the PASTR we want to build.
 		
 		if (rc.isActive()) {
@@ -56,7 +56,8 @@ public class SoldierHandler extends UnitHandler {
 			}
 			else {
 //				add destination check
-				if (targetLocation.x != -1 && rc.getLocation() != targetLocation) {
+				if (targetLocation.x != -1 && (rc.getLocation().x != targetLocation.x || 
+											   rc.getLocation().y != targetLocation.y)) {
 					tryMove();					
 				}
 			}
@@ -70,7 +71,7 @@ public class SoldierHandler extends UnitHandler {
 	private boolean shouldAttack() throws GameActionException {
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
 		MapLocation targetLoc = prioritizeTarget(enemyRobots);
-		if (targetLoc != enemyHQLocation) {
+		if (targetLoc.x != enemyHQLocation.x || targetLoc.y != enemyHQLocation.y) {
 			prioritizedEnemy = targetLoc;
 			return true;
 		}
@@ -103,17 +104,24 @@ public class SoldierHandler extends UnitHandler {
 			rc.broadcast(30000, id);
 		} else if (rc.readBroadcast(30000) == id) {
 			// Change this later if they are not going in order
-			if (rc.readBroadcast(20002) != 0 && destination == rc.getLocation()) {
+			if (rc.readBroadcast(20002) != 0 && destination.x == rc.getLocation().x &&
+				destination.y == rc.getLocation().y && rc.isActive()) {
 				rc.construct(RobotType.PASTR);
 			}
 		}		
 	}
-		
+
+	/* used to check if this robot should be the one to build the pastr */
+	private boolean shouldBuildPASTR() throws GameActionException {
+		int bc = rc.readBroadcast(30000);
+		return bc == 0 || bc == id;
+	}
+	
 	private void goToPASTR(MapLocation pastrLoc, Direction dir) throws GameActionException {
 		// Locations to go to:
 		// pastrLoc + dir * 3 + dirRotated * -2, -1, 0, 1, 2
 		if (rc.readBroadcast(30000) != id) {
-			for (int i = 4; i-- > 0;) {
+			for (int i = 5; i-- > 0;) {
 				if (rc.readBroadcast(20000 + i) == 0) {				
 					targetLocation = pastrLoc.add(dir, 3).add(dir.rotateLeft().rotateLeft(), i - 2);
 					Navigation.setDest(targetLocation); 
@@ -121,11 +129,13 @@ public class SoldierHandler extends UnitHandler {
 				}
 			}
 			// If we reached the target location, broadcast to the channel		
-			if (targetLocation.x != -1 && rc.getLocation() == targetLocation) {
+			if (targetLocation.x != -1 && (rc.getLocation().x == targetLocation.x &&
+										   rc.getLocation().y == targetLocation.y)) {
+				reachedDestination = true;
 				if (dir == Direction.EAST) {
-					rc.broadcast(20000 + targetLocation.y - pastrLoc.y + 2, id);
-				} else if (dir == Direction.WEST) {
 					rc.broadcast(20000 + pastrLoc.y - targetLocation.y + 2, id);
+				} else if (dir == Direction.WEST) {
+					rc.broadcast(20000 + targetLocation.y - pastrLoc.y + 2, id);
 				} else if (dir == Direction.NORTH) {
 					rc.broadcast(20000 + pastrLoc.x - targetLocation.x + 2, id);
 				} else if (dir == Direction.SOUTH) {
