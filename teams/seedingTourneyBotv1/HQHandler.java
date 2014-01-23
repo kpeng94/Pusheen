@@ -7,6 +7,7 @@ public class HQHandler extends UnitHandler {
 
 	MapLocation ourLoc;
 	MapLocation enemyLoc;
+	boolean curAttack;
 	int[] spawnlist;
 	int numberOfRobots = 0;
 	int numberOfNoiseTowers = 0;
@@ -33,6 +34,7 @@ public class HQHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
+		curAttack = false;
 		
 //	  if (rc.readBroadcast(15000) != Clock.getRoundNum() - 1) {
 //		  System.out.println("broadcast read: " + rc.readBroadcast(15000));
@@ -50,10 +52,12 @@ public class HQHandler extends UnitHandler {
 //	  	rc.broadcast(20004, 0);
 //	  }
 	 
-		if (rc.isActive() && rc.senseRobotCount() < 25) {
-			trySpawn();
+		if (rc.isActive()) {
+			tryAttack();
+			if (!curAttack && rc.senseRobotCount() < 25) {
+				trySpawn();
+			}
 		}
-		tryAttack();
 		calculate();
 	}
 
@@ -79,12 +83,14 @@ public class HQHandler extends UnitHandler {
 		for (int i = enemy.length; i-- > 0;) {
 			MapLocation loc = rc.senseRobotInfo(enemy[i]).location;
 			if (rc.canAttackSquare(loc)) {
+				curAttack = true;
 				rc.attackSquare(loc);
 				return;
 			}
 			else {
 				loc = new MapLocation(loc.x - Integer.signum(loc.x - ourLoc.x), loc.y - Integer.signum(loc.y - ourLoc.y));
 				if (rc.canAttackSquare(loc)) {
+					curAttack = true;
 					rc.attackSquare(loc);
 					return;
 				}
@@ -104,8 +110,9 @@ public class HQHandler extends UnitHandler {
 	 */
 	private void calculateGoodPointsNearbyToGoTo() throws GameActionException {
 		MapLocation ml;
-		System.out.println(CowMap.bestLoc.directionTo(enemyLoc));
-		System.out.println(Clock.getRoundNum());
+		if (CowMap.bestLoc == null) {
+			return;
+		}
 		switch (CowMap.bestLoc.directionTo(enemyLoc)) {
 			case WEST:
 				ml = CowMap.bestLoc.add(Direction.WEST, 3).add(Direction.SOUTH, 2);
