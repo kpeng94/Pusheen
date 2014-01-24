@@ -128,6 +128,8 @@ public class HQHandler extends UnitHandler {
 				rc.broadcast(22001, ml.x * 100 + ml.y);
 				ml = CowMap.bestLoc.add(Direction.WEST, 3);
 				rc.broadcast(22000, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 1);
+				rc.broadcast(22100, ml.x * 100 + ml.y);
 				break;
 			case NORTH:
 				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.WEST, 2);
@@ -140,6 +142,8 @@ public class HQHandler extends UnitHandler {
 				rc.broadcast(22001, ml.x * 100 + ml.y);
 				ml = CowMap.bestLoc.add(Direction.NORTH, 3);
 				rc.broadcast(22000, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 1);
+				rc.broadcast(22100, ml.x * 100 + ml.y);
 				break;
 			case SOUTH:
 				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.EAST, 2);
@@ -152,6 +156,8 @@ public class HQHandler extends UnitHandler {
 				rc.broadcast(22001, ml.x * 100 + ml.y);
 				ml = CowMap.bestLoc.add(Direction.SOUTH, 3);
 				rc.broadcast(22000, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 1);
+				rc.broadcast(22100, ml.x * 100 + ml.y);
 				break;
 			case SOUTH_WEST:
 				ml = CowMap.bestLoc.add(Direction.SOUTH, 4);
@@ -164,6 +170,8 @@ public class HQHandler extends UnitHandler {
 				rc.broadcast(22001, ml.x * 100 + ml.y);
 				ml = CowMap.bestLoc.add(Direction.SOUTH, 2).add(Direction.WEST, 2);
 				rc.broadcast(22000, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 1).add(Direction.EAST, 1);
+				rc.broadcast(22100, ml.x * 100 + ml.y);
 				break;
 			case NORTH_WEST:
 				ml = CowMap.bestLoc.add(Direction.NORTH, 4);
@@ -176,6 +184,8 @@ public class HQHandler extends UnitHandler {
 				rc.broadcast(22001, ml.x * 100 + ml.y);
 				ml = CowMap.bestLoc.add(Direction.NORTH, 2).add(Direction.WEST, 2);
 				rc.broadcast(22000, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 1).add(Direction.EAST, 1);
+				rc.broadcast(22100, ml.x * 100 + ml.y);
 				break;
 			case NORTH_EAST:
 				ml = CowMap.bestLoc.add(Direction.NORTH, 4);
@@ -188,6 +198,8 @@ public class HQHandler extends UnitHandler {
 				rc.broadcast(22001, ml.x * 100 + ml.y);
 				ml = CowMap.bestLoc.add(Direction.NORTH, 2).add(Direction.EAST, 2);
 				rc.broadcast(22000, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 1).add(Direction.WEST, 1);
+				rc.broadcast(22100, ml.x * 100 + ml.y);
 				break;
 			case SOUTH_EAST:
 				ml = CowMap.bestLoc.add(Direction.SOUTH, 4);
@@ -200,6 +212,8 @@ public class HQHandler extends UnitHandler {
 				rc.broadcast(22001, ml.x * 100 + ml.y);
 				ml = CowMap.bestLoc.add(Direction.SOUTH, 2).add(Direction.EAST, 2);
 				rc.broadcast(22000, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 1).add(Direction.WEST, 1);
+				rc.broadcast(22100, ml.x * 100 + ml.y);
 				break;
 			case EAST:
 			default: 
@@ -213,6 +227,8 @@ public class HQHandler extends UnitHandler {
 				rc.broadcast(22001, ml.x * 100 + ml.y);
 				ml = CowMap.bestLoc.add(Direction.EAST, 3);
 				rc.broadcast(22000, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 1);
+				rc.broadcast(22100, ml.x * 100 + ml.y);
 				break;
 		}
 	}
