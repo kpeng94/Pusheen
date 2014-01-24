@@ -27,8 +27,8 @@ public class SoldierHandler extends UnitHandler {
 		myHQLocation = rc.senseHQLocation();
 		myHQtoenemyHQ = myHQLocation.directionTo(enemyHQLocation);
 		myHQtoenemyHQint = myHQtoenemyHQ.ordinal();
-		closeToMe = new MapLocation((2 * myHQLocation.x + enemyHQLocation.x) / 3, 
-													 (2 * myHQLocation.y + enemyHQLocation.y) / 3);
+		closeToMe = new MapLocation((myHQLocation.x + enemyHQLocation.x) / 2, 
+													 (myHQLocation.y + enemyHQLocation.y) / 2);
 		Navigation.init(rc, closeToMe, 25);
 	}
 
@@ -120,7 +120,7 @@ public class SoldierHandler extends UnitHandler {
 	 */
 	private void tryToBeUseful() {
 		targetLocation = closeToMe;
-		Navigation.setDest(targetLocation, 25);		
+		Navigation.setDest(targetLocation, 16);
 	}
 
 	/**
@@ -161,16 +161,23 @@ public class SoldierHandler extends UnitHandler {
 		return bc == 0 || bc == id;		
 	}
 		
-	private boolean shouldBumRush() {
+	private boolean shouldBumRush() throws GameActionException {
 		updateBumRushInfo();
 		if (bumRushing) {
 			if (enemyPASTRs.length >= 1) {
 				targetLocation = getMostVulnerableEnemyLocation();
+				return true;
 			}
-			return true;
 		}
 		if (enemyPASTRs.length == 0) {
 			bumRushing = false;
+			for (int i = 5; i-- > 0; ) {
+				if (rc.readBroadcast(21000 + i) == id) {
+					int bc = rc.readBroadcast(22000 + i);
+					targetLocation = new MapLocation(bc / 100, bc % 100);
+					Navigation.setDest(targetLocation, 16);
+				}
+			}
 		}
 		if (enemyPASTRs.length >= 2 || (rc.senseTeamMilkQuantity(rc.getTeam().opponent()) > 
 		 rc.senseTeamMilkQuantity(rc.getTeam()) && enemyPASTRs.length >= 1)) {	
@@ -208,22 +215,6 @@ public class SoldierHandler extends UnitHandler {
 			}
 		}
 		return farthestPASTRFromTheirHQ;
-	}
-	/**
-	 * Resets channels that this robot was responsible for before.
-	 * This should only be called if the robot is changing its action 
-	 * (for example, from defending a pastr to bum rushing).
-	 * @throws GameActionException
-	 */
-	private void resetChannels() throws GameActionException {
-		for (int i = 5; i-- > 0;) {
-			if (rc.readBroadcast(20000 + i) == id) {
-				rc.broadcast(20000 + i, 0);
-			}
-			if (rc.readBroadcast(21000 + i) == id) {
-				rc.broadcast(21000 + i, 0);
-			}
-		}		
 	}
 
 	/**
@@ -349,35 +340,6 @@ public class SoldierHandler extends UnitHandler {
 		}
 		return lowestHealthTargetLocation;
 	}
-
-	private void checkIfShouldRushEnemyPASTR() {
-		// Attack should be only if enemy has more pastrs than we do.
-		// (2+ enemy pastrs, when we only have 1)
-		if (!shouldRushEnemyPASTR) {
-			MapLocation[] enemyPASTRs = rc.sensePastrLocations(rc.getTeam().opponent());
-			if (enemyPASTRs.length >= 2) {
-				shouldRushEnemyPASTR = true;
-				int farthestDist = enemyPASTRs[enemyPASTRs.length - 1].distanceSquaredTo(enemyHQLocation);
-				MapLocation farthestPASTRFromTheirHQ = enemyPASTRs[enemyPASTRs.length - 1];
-				for (int i = enemyPASTRs.length - 1; i-- > 0;) {
-					int newDist = enemyPASTRs[i].distanceSquaredTo(enemyHQLocation);
-					if (newDist > farthestDist) {
-						farthestDist = newDist;
-						farthestPASTRFromTheirHQ = enemyPASTRs[i];
-					}
-				}
-				targetLocation = farthestPASTRFromTheirHQ;
-				Navigation.setDest(farthestPASTRFromTheirHQ, 9);
-			} else if (Clock.getRoundNum() % 10 == 0 && rc.senseTeamMilkQuantity(rc.getTeam().opponent()) > 
-												 rc.senseTeamMilkQuantity(rc.getTeam())) {
-				shouldRushEnemyPASTR = true;
-				if (enemyPASTRs.length >= 1) {
-					Navigation.setDest(enemyPASTRs[0], 9);
-					targetLocation = enemyPASTRs[0];
-				}
-			}
-		}
-	}
 	
 	private void attackEnemyPASTRMicro() throws GameActionException {	
 		// Prioritize points in enemy PASTR with a lot of cows
@@ -406,25 +368,48 @@ public class SoldierHandler extends UnitHandler {
 	private void checkToFillSpots() throws GameActionException {
 		if (rc.readBroadcast(30000) == id) {
 		    rc.broadcast(15000, Clock.getRoundNum());
+		    rc.setIndicatorString(0, ""+id);
+		    rc.setIndicatorString(1, "pastr");		    
     	} else if (rc.readBroadcast(21000) == id) {
     		rc.broadcast(15001, Clock.getRoundNum());
+		    rc.setIndicatorString(0, ""+id);
+		    rc.setIndicatorString(1, "defend");		    
 		} else if (rc.readBroadcast(21001) == id) {
 		    rc.broadcast(15002, Clock.getRoundNum());
+		    rc.setIndicatorString(0, ""+id);
+		    rc.setIndicatorString(1, "defend");		    
 		} else if (rc.readBroadcast(21002) == id) {
 		    rc.broadcast(15003, Clock.getRoundNum());
+		    rc.setIndicatorString(0, ""+id);
+		    rc.setIndicatorString(1, "defend");		    
 		} else if (rc.readBroadcast(21003) == id) {
 		    rc.broadcast(15004, Clock.getRoundNum());
+		    rc.setIndicatorString(0, ""+id);
+		    rc.setIndicatorString(1, "defend");		    
 		} else if (rc.readBroadcast(21004) == id) {
 		    rc.broadcast(15005, Clock.getRoundNum());
+		    rc.setIndicatorString(0, ""+id);
+		    rc.setIndicatorString(1, "defend");		    
 		} else if (rc.readBroadcast(30001) == id) {
 			rc.broadcast(15006, Clock.getRoundNum());
+		    rc.setIndicatorString(0, ""+id);
+		    rc.setIndicatorString(1, "nt");		    
 		}
 	}
 	
 	private void moveForwardAndBack() throws GameActionException {
+//		for (int i = 5; i-- > 0;) {
+//			if (rc.readBroadcast(21000 + i) == id) {
+//				System.out.println("the location");
+//				int bc = rc.readBroadcast(22000 + i);
+//				if (rc.getLocation().distanceSquaredTo(new MapLocation(bc / 100, bc % 100)) > 2) {
+//					return;
+//				}
+//			}
+//		}
 		if (rc.readBroadcast(21000)==id || rc.readBroadcast(21001)==id || rc.readBroadcast(21002)==id 
 				|| rc.readBroadcast(21003)==id || rc.readBroadcast(21004)==id){
-			
+			System.out.println("who");
 			if (rc.readBroadcast(40000+id)==0){
 				if (rc.readBroadcast(15007)==(Clock.getRoundNum()-1) && Clock.getRoundNum()%50==0){
 					if (rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent()).length==0){
