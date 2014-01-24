@@ -173,6 +173,7 @@ public class SoldierHandler extends UnitHandler {
 	 * 20000 - 20004: information about whether or not a robot has defended a position.
 	 * 21000 - 21004: information about whether or not a robot has claimed a position to defend.
 	 * 22000 - 22004: locations that will be defended by each of these bots respectively
+	 * 23000 - 23004: information about whether or not a robot is close by to the position.
 	 * 
 	 * If all channels have been claimed by an ID, there's no need to defend it.
 	 * @return
@@ -238,7 +239,7 @@ public class SoldierHandler extends UnitHandler {
 			// Change this later if they are not going in order
 			int count = 0;
 			for (int i = 5; i-- > 0;) {
-				if (rc.readBroadcast(20000 + i) != 0) {
+				if (rc.readBroadcast(23000 + i) != 0) {
 					count++;
 				}
 			}
@@ -264,11 +265,15 @@ public class SoldierHandler extends UnitHandler {
 		if (rc.readBroadcast(30000) != id) {
 			Navigation.setDest(targetLocation);
 			// If we reached the target location, broadcast to the channel		
-			if (targetLocation.x != -1 && (rc.getLocation().x == targetLocation.x &&
-										   rc.getLocation().y == targetLocation.y)) {
-				reachedDestination = true;
-				rc.broadcast(channelClaimed - 1000, id);
-			}			
+			MapLocation ml = rc.getLocation();
+			if (targetLocation.x != -1) { 
+				if (ml.x == targetLocation.x && ml.y == targetLocation.y) {
+					reachedDestination = true;
+					rc.broadcast(channelClaimed - 1000, id);
+				} else if (ml.distanceSquaredTo(targetLocation) <= 1){
+					rc.broadcast(channelClaimed + 2000, id);
+				}
+			}
 		}
 	}
 	
