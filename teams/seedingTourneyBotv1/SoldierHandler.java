@@ -274,7 +274,7 @@ public class SoldierHandler extends UnitHandler {
 				if (ml.x == targetLocation.x && ml.y == targetLocation.y) {
 					reachedDestination = true;
 					rc.broadcast(channelClaimed - 1000, id);
-				} else if (ml.distanceSquaredTo(targetLocation) <= 1){
+				} else if (ml.distanceSquaredTo(targetLocation) <= 2){
 					rc.broadcast(channelClaimed + 2000, id);
 				}
 			}
@@ -349,16 +349,28 @@ public class SoldierHandler extends UnitHandler {
 
 	private void checkToFillSpots() throws GameActionException {
 		if (rc.readBroadcast(30000) == id) {
+			rc.setIndicatorString(0, ""+id);
+			rc.setIndicatorString(1, "pastr");
 		    rc.broadcast(15000, Clock.getRoundNum());
     	} else if (rc.readBroadcast(21000) == id) {
-		    rc.broadcast(15001, Clock.getRoundNum());
+    		rc.setIndicatorString(0, ""+id);
+    		rc.setIndicatorString(1, "defend");
+    		rc.broadcast(15001, Clock.getRoundNum());
 		} else if (rc.readBroadcast(21001) == id) {
+    		rc.setIndicatorString(0, ""+id);
+    		rc.setIndicatorString(1, "defend");
 		    rc.broadcast(15002, Clock.getRoundNum());
 		} else if (rc.readBroadcast(21002) == id) {
+    		rc.setIndicatorString(0, ""+id);
+    		rc.setIndicatorString(1, "defend");
 		    rc.broadcast(15003, Clock.getRoundNum());
 		} else if (rc.readBroadcast(21003) == id) {
+    		rc.setIndicatorString(0, ""+id);
+    		rc.setIndicatorString(1, "defend");
 		    rc.broadcast(15004, Clock.getRoundNum());
 		} else if (rc.readBroadcast(21004) == id) {
+    		rc.setIndicatorString(0, ""+id);
+    		rc.setIndicatorString(1, "defend");
 		    rc.broadcast(15005, Clock.getRoundNum());
 		}
 	}
