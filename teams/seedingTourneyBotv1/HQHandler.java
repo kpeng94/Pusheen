@@ -36,21 +36,24 @@ public class HQHandler extends UnitHandler {
 		super.execute();
 		curAttack = false;
 		
-//	  if (rc.readBroadcast(15000) != Clock.getRoundNum() - 1) {
-//		  System.out.println("broadcast read: " + rc.readBroadcast(15000));
-//		  System.out.println("round number: " + Clock.getRoundNum());
-//	    rc.broadcast(30000, 0);
-//	  } else if (rc.readBroadcast(15001) != Clock.getRoundNum() - 1) {
-//	    rc.broadcast(20000, 0);
-//	  } else if (rc.readBroadcast(15002) != Clock.getRoundNum() - 1) {
-//	    rc.broadcast(20001, 0);
-//	  } else if (rc.readBroadcast(15003) != Clock.getRoundNum() - 1) {
-//	    rc.broadcast(20002, 0);
-//	  } else if (rc.readBroadcast(15004) != Clock.getRoundNum() - 1) {
-//	    rc.broadcast(20003, 0);
-//	  } else if (rc.readBroadcast(15005) != Clock.getRoundNum() - 1) {
-//	  	rc.broadcast(20004, 0);
-//	  }
+	  if (rc.readBroadcast(15000) != Clock.getRoundNum() - 1) {
+	    rc.broadcast(30000, 0);
+	  } else if (rc.readBroadcast(15001) != Clock.getRoundNum() - 1) {
+	    rc.broadcast(20000, 0);
+	    rc.broadcast(21000, 0);	    
+	  } else if (rc.readBroadcast(15002) != Clock.getRoundNum() - 1) {
+	    rc.broadcast(20001, 0);
+	    rc.broadcast(21001, 0);	    
+	  } else if (rc.readBroadcast(15003) != Clock.getRoundNum() - 1) {
+	    rc.broadcast(20002, 0);
+	    rc.broadcast(21002, 0);	    
+	  } else if (rc.readBroadcast(15004) != Clock.getRoundNum() - 1) {
+	    rc.broadcast(20003, 0);
+	    rc.broadcast(21003, 0);	    
+	  } else if (rc.readBroadcast(15005) != Clock.getRoundNum() - 1) {
+	  	rc.broadcast(20004, 0);
+	    rc.broadcast(21004, 0);	    
+	  }
 	 
 		if (rc.isActive()) {
 			tryAttack();
