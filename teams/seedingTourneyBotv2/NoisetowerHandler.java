@@ -14,6 +14,7 @@ public class NoisetowerHandler extends UnitHandler {
 	public void execute() throws GameActionException{
 		super.execute();
 		runNoise();
+		rc.setIndicatorString(0, ""+Clock.getRoundNum());
 	}
 
 	private void runNoise() throws GameActionException{
