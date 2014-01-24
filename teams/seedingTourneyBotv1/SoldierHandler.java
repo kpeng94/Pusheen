@@ -55,9 +55,10 @@ public class SoldierHandler extends UnitHandler {
 				}
 			} else if (obj == 3) {
 				bumRush();
-
+			} else if (obj == 4) {
+				buildNoiseTower(pastrLocation);
 			} else {
-				tryToBeUseful();
+				tryToBeUseful();				
 			}
 		}			
 		// There is a location for the PASTR we want to build.
@@ -76,6 +77,26 @@ public class SoldierHandler extends UnitHandler {
 		calculate();
 	}
 
+	private void buildNoiseTower(MapLocation destination) throws GameActionException {
+			// Check if 3 / 5 of the robots on our side are in decent defense position
+			if (rc.readBroadcast(30001) == 0) {
+				Navigation.setDest(destination);
+				targetLocation = destination;
+				rc.broadcast(30001, id);
+			} else if (rc.readBroadcast(30001) == id) {
+				// Change this later if they are not going in order
+				int count = 0;
+				for (int i = 5; i-- > 0;) {
+					if (rc.readBroadcast(23000 + i) != 0) {
+						count++;
+					}
+				}
+				if (count >= 4 && rc.getLocation().distanceSquaredTo(pastrLocation) <= 1 && rc.isActive()) {
+					rc.construct(RobotType.NOISETOWER);
+				}
+			}		
+	}
+
 	/**
 	 * If we really don't know what to do right now, we can try to be useful.
 	 */
@@ -90,12 +111,19 @@ public class SoldierHandler extends UnitHandler {
 	 * 1 : build a PASTR at optimal PASTR location
 	 * 2 : defend the PASTR
 	 * 3 : bum rush enemy
+	 * 4 : build noise tower
+	 * 
+	 * So here, 1 > 4 > 3 > 2 > 
+	 * 
 	 * @return 
 	 */
 	private int decideObjective() throws GameActionException {
 		if (shouldBuildPASTR()) {
 			return 1;
 		}
+		if (shouldBuildNoiseTower()) {
+			return 4;
+		}		
 		if (shouldBumRush()) {
 			return 3;
 		}
@@ -105,6 +133,16 @@ public class SoldierHandler extends UnitHandler {
 		return 0;
 	}
 	
+	/**
+	 * Checks if no one has built a noise tower yet or if 
+	 * @return
+	 * @throws GameActionException
+	 */
+	private boolean shouldBuildNoiseTower() throws GameActionException {
+		int bc = rc.readBroadcast(30001);
+		return bc == 0 || bc == id;		
+	}
+		
 	private boolean shouldBumRush() {
 		updateBumRushInfo();
 		if (bumRushing) {
