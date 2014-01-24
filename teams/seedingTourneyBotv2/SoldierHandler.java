@@ -327,7 +327,7 @@ public class SoldierHandler extends UnitHandler {
 				if (ml.x == targetLocation.x && ml.y == targetLocation.y) {
 					reachedDestination = true;
 					rc.broadcast(channelClaimed - 1000, id);
-				} else if (ml.distanceSquaredTo(targetLocation) <= 10){
+				} else if (ml.distanceSquaredTo(targetLocation) <= 10) {
 					rc.broadcast(channelClaimed + 2000, id);
 				}
 			}
