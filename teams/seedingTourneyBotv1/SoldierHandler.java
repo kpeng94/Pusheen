@@ -31,6 +31,8 @@ public class SoldierHandler extends UnitHandler {
 	public void execute() throws GameActionException {
 		super.execute();
 
+		checkToFillSpots();
+		
 		// Navigation for each soldier
 		if (!Navigation.mapDone) {
 			if (rc.readBroadcast(1) == 1)
@@ -187,6 +189,7 @@ public class SoldierHandler extends UnitHandler {
 				if (bc != 0) {
 					targetLocation = new MapLocation(bc / 100, bc % 100);
 					rc.broadcast(21000 + i, id);
+					rc.broadcast(15001 + i, Clock.getRoundNum());
 					channelClaimed = 21000 + i;
 					return true;
 				}
@@ -235,6 +238,7 @@ public class SoldierHandler extends UnitHandler {
 			Navigation.setDest(destination);
 			targetLocation = destination;
 			rc.broadcast(30000, id);
+			rc.broadcast(15000, Clock.getRoundNum());
 		} else if (rc.readBroadcast(30000) == id) {
 			// Change this later if they are not going in order
 			int count = 0;
@@ -346,15 +350,15 @@ public class SoldierHandler extends UnitHandler {
 	private void checkToFillSpots() throws GameActionException {
 		if (rc.readBroadcast(30000) == id) {
 		    rc.broadcast(15000, Clock.getRoundNum());
-    	} else if (rc.readBroadcast(20000) == id) {
+    	} else if (rc.readBroadcast(21000) == id) {
 		    rc.broadcast(15001, Clock.getRoundNum());
-		} else if (rc.readBroadcast(20001) == id) {
+		} else if (rc.readBroadcast(21001) == id) {
 		    rc.broadcast(15002, Clock.getRoundNum());
-		} else if (rc.readBroadcast(20002) == id) {
+		} else if (rc.readBroadcast(21002) == id) {
 		    rc.broadcast(15003, Clock.getRoundNum());
-		} else if (rc.readBroadcast(20003) == id) {
+		} else if (rc.readBroadcast(21003) == id) {
 		    rc.broadcast(15004, Clock.getRoundNum());
-		} else if (rc.readBroadcast(20004) == id) {
+		} else if (rc.readBroadcast(21004) == id) {
 		    rc.broadcast(15005, Clock.getRoundNum());
 		}
 	}
