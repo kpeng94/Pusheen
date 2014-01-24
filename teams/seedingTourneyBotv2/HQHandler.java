@@ -7,8 +7,11 @@ public class HQHandler extends UnitHandler {
 
 	MapLocation ourLoc;
 	MapLocation enemyLoc;
+	boolean curAttack;
 	int[] spawnlist;
-	
+	int numberOfRobots = 0;
+	int numberOfNoiseTowers = 0;
+
 	public HQHandler(RobotController rcin) {
 		super(rcin);
 		ourLoc = rc.senseHQLocation();
@@ -31,24 +34,33 @@ public class HQHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
+		curAttack = false;
 		
-		if (rc.readBroadcast(15000) != Clock.getRoundNum()-1){
-			rc.broadcast(30000, 0);
-		} else if (rc.readBroadcast(15001)!=Clock.getRoundNum()-1){
-			rc.broadcast(20000, 0);
-		} else if (rc.readBroadcast(15002)!=Clock.getRoundNum()-1){
-			rc.broadcast(20001, 0);
-		} else if (rc.readBroadcast(15003)!=Clock.getRoundNum()-1){
-			rc.broadcast(20002, 0);
-		} else if (rc.readBroadcast(15004)!=Clock.getRoundNum()-1){
-			rc.broadcast(20003, 0);
-		} else if (rc.readBroadcast(15005)!=Clock.getRoundNum()-1){
-			rc.broadcast(20004, 0);
+	  if (rc.readBroadcast(15000) != Clock.getRoundNum() - 1) {
+	    rc.broadcast(30000, 0);
+	  } else if (rc.readBroadcast(15001) != Clock.getRoundNum() - 1) {
+	    rc.broadcast(20000, 0);
+	    rc.broadcast(21000, 0);	    
+	  } else if (rc.readBroadcast(15002) != Clock.getRoundNum() - 1) {
+	    rc.broadcast(20001, 0);
+	    rc.broadcast(21001, 0);	    
+	  } else if (rc.readBroadcast(15003) != Clock.getRoundNum() - 1) {
+	    rc.broadcast(20002, 0);
+	    rc.broadcast(21002, 0);	    
+	  } else if (rc.readBroadcast(15004) != Clock.getRoundNum() - 1) {
+	    rc.broadcast(20003, 0);
+	    rc.broadcast(21003, 0);	    
+	  } else if (rc.readBroadcast(15005) != Clock.getRoundNum() - 1) {
+	  	rc.broadcast(20004, 0);
+	    rc.broadcast(21004, 0);	    
+	  }
+	 
+		if (rc.isActive()) {
+			tryAttack();
+			if (!curAttack && rc.senseRobotCount() < 25) {
+				trySpawn();
+			}
 		}
-		if (rc.isActive() && rc.senseRobotCount() < 25) {
-			trySpawn();
-		}
-		tryAttack();
 		calculate();
 	}
 
@@ -62,6 +74,7 @@ public class HQHandler extends UnitHandler {
 			}
 			if (rc.senseObjectAtLocation(spawnLoc) == null) {
 				rc.spawn(dir[spawnlist[i]]);
+				numberOfRobots++;
 				return;
 			}
 		}
@@ -73,12 +86,14 @@ public class HQHandler extends UnitHandler {
 		for (int i = enemy.length; i-- > 0;) {
 			MapLocation loc = rc.senseRobotInfo(enemy[i]).location;
 			if (rc.canAttackSquare(loc)) {
+				curAttack = true;
 				rc.attackSquare(loc);
 				return;
 			}
 			else {
 				loc = new MapLocation(loc.x - Integer.signum(loc.x - ourLoc.x), loc.y - Integer.signum(loc.y - ourLoc.y));
 				if (rc.canAttackSquare(loc)) {
+					curAttack = true;
 					rc.attackSquare(loc);
 					return;
 				}
@@ -89,6 +104,116 @@ public class HQHandler extends UnitHandler {
 	/* Do calculations with leftover bytecode */
 	private void calculate() throws GameActionException {
 		CowMap.calculate();
+		calculateGoodPointsNearbyToGoTo();
 	}
-
+	
+	/**
+	 * 
+	 * @throws GameActionException
+	 */
+	private void calculateGoodPointsNearbyToGoTo() throws GameActionException {
+		MapLocation ml;
+		if (CowMap.bestLoc == null) {
+			return;
+		}
+		switch (CowMap.bestLoc.directionTo(enemyLoc)) {
+			case WEST:
+				ml = CowMap.bestLoc.add(Direction.WEST, 3).add(Direction.SOUTH, 2);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 3).add(Direction.SOUTH, -2);
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 3).add(Direction.SOUTH, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 3).add(Direction.SOUTH, -1);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 3);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+				break;
+			case NORTH:
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.WEST, 2);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.WEST, -2);
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.WEST, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.WEST, -1);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+				break;
+			case SOUTH:
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.EAST, 2);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.EAST, -2);
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.EAST, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.EAST, -1);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+				break;
+			case SOUTH_WEST:
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 4);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 4);				
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.WEST, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 1).add(Direction.WEST, 3);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 2).add(Direction.WEST, 2);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+				break;
+			case NORTH_WEST:
+				ml = CowMap.bestLoc.add(Direction.NORTH, 4);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.WEST, 4);				
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.WEST, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 1).add(Direction.WEST, 3);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 2).add(Direction.WEST, 2);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+				break;
+			case NORTH_EAST:
+				ml = CowMap.bestLoc.add(Direction.NORTH, 4);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 4);				
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 3).add(Direction.EAST, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 1).add(Direction.EAST, 3);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.NORTH, 2).add(Direction.EAST, 2);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+				break;
+			case SOUTH_EAST:
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 4);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 4);				
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 3).add(Direction.EAST, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 1).add(Direction.EAST, 3);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.SOUTH, 2).add(Direction.EAST, 2);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+				break;
+			case EAST:
+			default: 
+				ml = CowMap.bestLoc.add(Direction.EAST, 3).add(Direction.NORTH, 2);
+				rc.broadcast(22004, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 3).add(Direction.NORTH, -2);
+				rc.broadcast(22003, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 3).add(Direction.NORTH, 1);
+				rc.broadcast(22002, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 3).add(Direction.NORTH, -1);
+				rc.broadcast(22001, ml.x * 100 + ml.y);
+				ml = CowMap.bestLoc.add(Direction.EAST, 3);
+				rc.broadcast(22000, ml.x * 100 + ml.y);
+				break;
+		}
+	}
 }
