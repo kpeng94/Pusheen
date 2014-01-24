@@ -96,6 +96,9 @@ public class CowMap {
 	private static void checkBest(double cows, MapLocation loc) {
 		for (int i = checkDirs.length; i-- > 0;) {
 			MapLocation newLoc = loc.add(checkDirs[i]);
+			if (newLoc.x == ourHQ.x && newLoc.y == ourHQ.y) {
+				continue;
+			}
 			if (rc.senseTerrainTile(newLoc) != TerrainTile.VOID) {
 				bestCows = cows;
 				bestLoc = newLoc;
