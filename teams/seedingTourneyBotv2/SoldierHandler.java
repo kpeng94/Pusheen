@@ -102,7 +102,7 @@ public class SoldierHandler extends UnitHandler {
 	 */
 	private void tryToBeUseful() {
 		targetLocation = closeToMe;
-		Navigation.setDest(targetLocation);		
+		Navigation.setDest(targetLocation, 25);		
 	}
 
 	/**

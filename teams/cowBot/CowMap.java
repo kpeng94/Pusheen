@@ -95,9 +95,10 @@ public class CowMap {
 	/* Checks a 2x2 region to make sure that its not void */
 	private static void checkBest(double cows, MapLocation loc) {
 		for (int i = checkDirs.length; i-- > 0;) {
-			if (rc.senseTerrainTile(loc.add(checkDirs[i])) != TerrainTile.VOID) {
+			MapLocation newLoc = loc.add(checkDirs[i]);
+			if (rc.senseTerrainTile(newLoc) != TerrainTile.VOID) {
 				bestCows = cows;
-				bestLoc = loc;
+				bestLoc = newLoc;
 				bestDist = ourHQ.distanceSquaredTo(bestLoc);
 			}
 		}
