@@ -53,6 +53,8 @@ public class HQHandler extends UnitHandler {
 	  } else if (rc.readBroadcast(15005) != Clock.getRoundNum() - 1) {
 	  	rc.broadcast(20004, 0);
 	    rc.broadcast(21004, 0);	    
+	  } else if (rc.readBroadcast(15006) != Clock.getRoundNum() - 1) {
+		rc.broadcast(30001, 0);
 	  }
 	 
 		if (rc.isActive()) {

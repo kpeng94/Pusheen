@@ -15,6 +15,9 @@ public class NoisetowerHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException{
 		super.execute();
+		
+		rc.broadcast(15006, Clock.getRoundNum());
+		rc.broadcast(15007, Clock.getRoundNum());
 		if (rc.isActive()) {
 			runNoise();
 		}
