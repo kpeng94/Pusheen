@@ -81,10 +81,12 @@ public class SoldierHandler extends UnitHandler {
 			if (shouldAttack()) {
 				tryAttack();
 			} else {
-				moveForwardAndBack();
 				if (targetLocation.x != -1 && (rc.getLocation().x != targetLocation.x || 
-											   rc.getLocation().y != targetLocation.y)) {
+											   rc.getLocation().y != targetLocation.y)
+											   && rc.readBroadcast(40000+id)==0) {
 					tryMove();					
+				} else {
+					moveForwardAndBack();
 				}
 			}
 		}
@@ -98,6 +100,7 @@ public class SoldierHandler extends UnitHandler {
 				Navigation.setDest(destination);
 				targetLocation = destination;
 				rc.broadcast(30001, id);
+				rc.broadcast(15006, Clock.getRoundNum());
 			} else if (rc.readBroadcast(30001) == id) {
 				// Change this later if they are not going in order
 				int count = 0;
@@ -425,6 +428,10 @@ public class SoldierHandler extends UnitHandler {
     		rc.setIndicatorString(0, ""+id);
     		rc.setIndicatorString(1, "defend");
 		    rc.broadcast(15005, Clock.getRoundNum());
+		} else if (rc.readBroadcast(30001) == id) {
+			rc.setIndicatorString(0, ""+id);
+			rc.setIndicatorString(1, "noise tower");
+			rc.broadcast(15006, Clock.getRoundNum());
 		}
 	}
 	
@@ -433,25 +440,26 @@ public class SoldierHandler extends UnitHandler {
 				|| rc.readBroadcast(21003)==id || rc.readBroadcast(21004)==id){
 			
 			if (rc.readBroadcast(40000+id)==0){
-				if (Clock.getRoundNum()>=200 && Clock.getRoundNum()%50==0){
-//				if (rc.readBroadcast(15006)!=0 && Clock.getRoundNum()%50==0){
+				if (rc.readBroadcast(15007)==(Clock.getRoundNum()-1) && Clock.getRoundNum()%50==0){
 					if (rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent()).length==0){
-						if (rc.canMove(myHQtoenemyHQ)){
+						if (rc.isActive() && rc.canMove(myHQtoenemyHQ)){
 							rc.broadcast(40000+id, myHQtoenemyHQint+8);
 							rc.move(myHQtoenemyHQ);
-						} else if (rc.canMove(Navigation.dir[myHQtoenemyHQint+1])){
+						} else if (rc.isActive() && rc.canMove(Navigation.dir[(myHQtoenemyHQint+1+8)%8])){
 							rc.broadcast(40000+id, myHQtoenemyHQint+1+8);
-							rc.move(Navigation.dir[myHQtoenemyHQint+1]);
-						} else if (rc.canMove(Navigation.dir[myHQtoenemyHQint-1])){
+							rc.move(Navigation.dir[(myHQtoenemyHQint+1+8)%8]);
+						} else if (rc.isActive() && rc.canMove(Navigation.dir[(myHQtoenemyHQint-1+8)%8])){
 							rc.broadcast(40000+id, myHQtoenemyHQint-1+8);
-							rc.move(Navigation.dir[myHQtoenemyHQint+1]);
+							rc.move(Navigation.dir[(myHQtoenemyHQint-1+8)%8]);
 						}
 					}
 				}
 			} else {
-				int backdir =rc.readBroadcast(40000+id)%8;
-				rc.broadcast(40000+id, 0);
-				rc.move(Navigation.dir[(backdir+4)%8]);
+				int backdir =(rc.readBroadcast(40000+id))%8;
+				if (rc.isActive() && rc.canMove(Navigation.dir[(backdir+4)%8])){
+					rc.broadcast(40000+id, 0);
+					rc.move(Navigation.dir[(backdir+4)%8]);
+				}
 			}
 			
 		}
