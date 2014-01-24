@@ -4,6 +4,7 @@ import battlecode.common.*;
 
 public class SoldierHandler extends UnitHandler {
 
+	static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
 	public static MapLocation enemyHQLocation;
 	public static MapLocation myHQLocation;
 	public static MapLocation prioritizedEnemy; 
@@ -61,7 +62,15 @@ public class SoldierHandler extends UnitHandler {
 			} else if (obj == 3) {
 				bumRush();
 			} else if (obj == 4) {
-				buildNoiseTower(pastrLocation);
+				MapLocation destination = pastrLocation.add(dir[7], 1);
+				for (int d = 8; d-- > 0;) {
+					destination = pastrLocation.add(dir[d % 8], 1);
+					TerrainTile tt = rc.senseTerrainTile(destination);
+					if (tt != TerrainTile.VOID && tt != TerrainTile.OFF_MAP) {
+						break;
+					}					
+				}
+				buildNoiseTower(destination);
 			} else {
 				tryToBeUseful();				
 			}
@@ -100,7 +109,7 @@ public class SoldierHandler extends UnitHandler {
 						count++;
 					}
 				}
-				if (count >= 4 && rc.getLocation().distanceSquaredTo(pastrLocation) <= 1 && rc.isActive()) {
+				if (count >= 4 && rc.getLocation().distanceSquaredTo(destination) == 0 && rc.isActive()) {
 					rc.construct(RobotType.NOISETOWER);
 				}
 			}		
@@ -321,7 +330,7 @@ public class SoldierHandler extends UnitHandler {
 				if (ml.x == targetLocation.x && ml.y == targetLocation.y) {
 					reachedDestination = true;
 					rc.broadcast(channelClaimed - 1000, id);
-				} else if (ml.distanceSquaredTo(targetLocation) <= 2){
+				} else if (ml.distanceSquaredTo(targetLocation) <= 10){
 					rc.broadcast(channelClaimed + 2000, id);
 				}
 			}
