@@ -108,7 +108,7 @@ public class SoldierHandler extends UnitHandler {
 	 */
 	private void tryToBeUseful() {
 		targetLocation = closeToMe;
-		Navigation.setDest(targetLocation);		
+		Navigation.setDest(targetLocation, 25);		
 	}
 
 	/**
@@ -160,8 +160,8 @@ public class SoldierHandler extends UnitHandler {
 		if (enemyPASTRs.length == 0) {
 			bumRushing = false;
 		}
-		if (enemyPASTRs.length >= 2 || (Clock.getRoundNum() % 10 == 0 && rc.senseTeamMilkQuantity(rc.getTeam().opponent()) > 
-		 rc.senseTeamMilkQuantity(rc.getTeam()))) {	
+		if (enemyPASTRs.length >= 2 || (rc.senseTeamMilkQuantity(rc.getTeam().opponent()) > 
+		 rc.senseTeamMilkQuantity(rc.getTeam()) && enemyPASTRs.length >= 1)) {	
 			// Attack the PASTR that is farthest from the enemy.
 			// Perhaps write some code later that will avoid HQs altogether.
 			targetLocation = getMostVulnerableEnemyLocation();
