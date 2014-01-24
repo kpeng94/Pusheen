@@ -18,11 +18,15 @@ public class SoldierHandler extends UnitHandler {
 	public static int channelClaimed = 0;
 	public static MapLocation closeToMe; 
 	public static boolean bumRushing;
+	public static Direction myHQtoenemyHQ;
+	public static int myHQtoenemyHQint;
 	
 	public SoldierHandler(RobotController rcin) {
 		super(rcin);
 		enemyHQLocation = rc.senseEnemyHQLocation();
 		myHQLocation = rc.senseHQLocation();
+		myHQtoenemyHQ = myHQLocation.directionTo(enemyHQLocation);
+		myHQtoenemyHQint = myHQtoenemyHQ.ordinal();
 		closeToMe = new MapLocation((2 * myHQLocation.x + enemyHQLocation.x) / 3, 
 													 (2 * myHQLocation.y + enemyHQLocation.y) / 3);
 		Navigation.init(rc, closeToMe, 25);
@@ -33,6 +37,7 @@ public class SoldierHandler extends UnitHandler {
 		super.execute();
 
 		checkToFillSpots();
+
 		
 		// Navigation for each soldier
 		if (!Navigation.mapDone) {
@@ -76,6 +81,7 @@ public class SoldierHandler extends UnitHandler {
 			if (shouldAttack()) {
 				tryAttack();
 			} else {
+				moveForwardAndBack();
 				if (targetLocation.x != -1 && (rc.getLocation().x != targetLocation.x || 
 											   rc.getLocation().y != targetLocation.y)) {
 					tryMove();					
@@ -419,6 +425,35 @@ public class SoldierHandler extends UnitHandler {
     		rc.setIndicatorString(0, ""+id);
     		rc.setIndicatorString(1, "defend");
 		    rc.broadcast(15005, Clock.getRoundNum());
+		}
+	}
+	
+	private void moveForwardAndBack() throws GameActionException {
+		if (rc.readBroadcast(21000)==id || rc.readBroadcast(21001)==id || rc.readBroadcast(21002)==id 
+				|| rc.readBroadcast(21003)==id || rc.readBroadcast(21004)==id){
+			
+			if (rc.readBroadcast(40000+id)==0){
+				if (Clock.getRoundNum()>=200 && Clock.getRoundNum()%50==0){
+//				if (rc.readBroadcast(15006)!=0 && Clock.getRoundNum()%50==0){
+					if (rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent()).length==0){
+						if (rc.canMove(myHQtoenemyHQ)){
+							rc.broadcast(40000+id, myHQtoenemyHQint+8);
+							rc.move(myHQtoenemyHQ);
+						} else if (rc.canMove(Navigation.dir[myHQtoenemyHQint+1])){
+							rc.broadcast(40000+id, myHQtoenemyHQint+1+8);
+							rc.move(Navigation.dir[myHQtoenemyHQint+1]);
+						} else if (rc.canMove(Navigation.dir[myHQtoenemyHQint-1])){
+							rc.broadcast(40000+id, myHQtoenemyHQint-1+8);
+							rc.move(Navigation.dir[myHQtoenemyHQint+1]);
+						}
+					}
+				}
+			} else {
+				int backdir =rc.readBroadcast(40000+id)%8;
+				rc.broadcast(40000+id, 0);
+				rc.move(Navigation.dir[(backdir+4)%8]);
+			}
+			
 		}
 	}
 }
