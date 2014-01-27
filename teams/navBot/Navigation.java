@@ -58,7 +58,7 @@ public class Navigation {
 	}
 	
 	public static void setDest(MapLocation destination, int rad) {
-		if (dest != destination) {
+		if (dest == null || (dest.x != destination.x && dest.y != destination.y)) {
 			pathDone = false;
 			dest = destination;
 			mapinfo = new int[width * height];

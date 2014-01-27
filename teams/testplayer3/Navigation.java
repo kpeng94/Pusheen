@@ -58,7 +58,7 @@ public class Navigation {
 	}
 	
 	public static void setDest(MapLocation destination, int rad) {
-		if (dest != destination) {
+		if (dest == null || (dest.x != destination.x && dest.y != destination.y)) {
 			pathDone = false;
 			dest = destination;
 			mapinfo = new int[width * height];
@@ -139,7 +139,7 @@ public class Navigation {
 			for (int i = 8; i-- > 0;) {
 				MapLocation next = curCheck.add(dir[(toDest + reversedAll[i] + 8) % 8]);
 				int intloc = toInt(next);
-				if (intloc < 0 || intloc >= width * height) {
+				if (intloc < 0 || intloc > width * height) {
 					continue;
 				}
 				int roundNum = (mapinfo[intloc] % 90000) / 9;
