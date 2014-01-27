@@ -9,12 +9,14 @@ public class HQHandler extends UnitHandler {
 	MapLocation enemyLoc;
 	int[] spawnlist;
 	
-	public HQHandler(RobotController rcin) {
+	public HQHandler(RobotController rcin) throws GameActionException {
 		super(rcin);
 		ourLoc = rc.senseHQLocation();
 		enemyLoc = rc.senseEnemyHQLocation();
 		getSpawn();
 		CowMap.init(rc);
+		Map.init(rc);
+		Map.HQinit();
 	}
 
 	/* Generates spawn list order */
@@ -42,11 +44,8 @@ public class HQHandler extends UnitHandler {
 	private void trySpawn() throws GameActionException {
 		for (int i = spawnlist.length; i-- > 0;) {
 			MapLocation spawnLoc = ourLoc.add(dir[spawnlist[i]]);
-			TerrainTile tile = rc.senseTerrainTile(spawnLoc);
-			if (tile == TerrainTile.OFF_MAP || tile == TerrainTile.VOID) {
-				continue;
-			}
-			if (rc.senseObjectAtLocation(spawnLoc) == null) {
+			int tile = Map.getTile(spawnLoc);
+			if (tile < 3 && rc.senseObjectAtLocation(spawnLoc) == null) {
 				rc.spawn(dir[spawnlist[i]]);
 				return;
 			}
@@ -75,8 +74,7 @@ public class HQHandler extends UnitHandler {
 	/* Do calculations with leftover bytecode */
 	private void calculate() throws GameActionException {
 		CowMap.calculate();
+		Map.calculate(1000);
 	}
-	
-	// HQ needs a method to scan the terrain area around and broadcast how it should defend the points
 
 }

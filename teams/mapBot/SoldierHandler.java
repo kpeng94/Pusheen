@@ -4,8 +4,9 @@ import battlecode.common.*;
 
 public class SoldierHandler extends UnitHandler {
 
-	public SoldierHandler(RobotController rcin) {
+	public SoldierHandler(RobotController rcin) throws GameActionException {
 		super(rcin);
+		Map.init(rc);
 		Navigation.init(rc, rc.senseEnemyHQLocation(), 25);
 	}
 
@@ -45,8 +46,9 @@ public class SoldierHandler extends UnitHandler {
 	}
 	
 	/* Does calculations */
-	private void calculate() {
+	private void calculate() throws GameActionException {
 		Navigation.calculate();
+		Map.calculate(1000);
 	}
 
 }

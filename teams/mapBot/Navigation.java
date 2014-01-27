@@ -30,11 +30,11 @@ public class Navigation {
 	public static boolean isRoad;
 	
 	/* Initializes navigation to know the width and height */
-	public static void init(RobotController rcin) {
+	public static void init(RobotController rcin) throws GameActionException {
 		init(rcin, null, 1);
 	}
 	
-	public static void init(RobotController rcin, MapLocation defaultLoc, int radius) {
+	public static void init(RobotController rcin, MapLocation defaultLoc, int radius) throws GameActionException {
 		mapDone = false;
 		rc = rcin;
 		width = rc.getMapWidth();
@@ -53,18 +53,18 @@ public class Navigation {
 	}
 	
 	/* Sets the destination */
-	public static void setDest(MapLocation destination) {
+	public static void setDest(MapLocation destination) throws GameActionException {
 		setDest(destination, 1);
 	}
 	
-	public static void setDest(MapLocation destination, int rad) {
+	public static void setDest(MapLocation destination, int rad) throws GameActionException {
 		if (dest == null || (dest.x != destination.x && dest.y != destination.y)) {
 			pathDone = false;
 			dest = destination;
 			mapinfo = new int[width * height];
 			curCheck = rc.getLocation();
 			checkNum = 0;
-			isRoad = rc.senseTerrainTile(curCheck) == TerrainTile.ROAD;
+			isRoad = Map.getTile(curCheck) == 2;
 		}
 		radius = rad;
 	}
@@ -112,7 +112,7 @@ public class Navigation {
 	}
 	
 	/* Calculates paths during idle time */
-	public static void calculate() {
+	public static void calculate() throws GameActionException {
 		if (mapDone) {
 			complexCalculate();
 		}
@@ -121,11 +121,11 @@ public class Navigation {
 		}
 	}
 	
-	public static void simpleCalculate() {
+	public static void simpleCalculate() throws GameActionException {
 		simpleCalculate(2500);
 	}
 	
-	public static void simpleCalculate(int bytelimit) {
+	public static void simpleCalculate(int bytelimit) throws GameActionException {
 		while (Clock.getBytecodesLeft() > bytelimit) {
 			if (curCheck.distanceSquaredTo(dest) <= radius) {
 				return;
@@ -143,14 +143,14 @@ public class Navigation {
 					continue;
 				}
 				int roundNum = (mapinfo[intloc] % 90000) / 9;
-				TerrainTile tile = rc.senseTerrainTile(next);
-				if (!isValid(next, tile)) {
+				int tile = Map.getTile(next);
+				if (tile == 3 || tile == 4) {
 					continue;
 				}
 				if (roundNum == 0) {
 					updateAdjacent(toInt(curCheck), isRoad ? 1 : 2);
 					curCheck = next;
-					isRoad = tile == TerrainTile.ROAD;
+					isRoad = tile == 2;
 					mapinfo[toInt(curCheck)] += checkNum * 9;
 					checkNum++;
 					break;
@@ -159,7 +159,7 @@ public class Navigation {
 					if (roundNum < minRound) {
 						minRound = roundNum;
 						minNext = next;
-						minRoad = tile == TerrainTile.ROAD;
+						minRoad = tile == 2;
 					}
 				}
 			}
@@ -222,13 +222,6 @@ public class Navigation {
 		if (rc.getLocation().distanceSquaredTo(pos) < checkDist + 1) {
 			curPathPos--;
 		}
-	}
-	
-	private static boolean isValid(MapLocation loc, TerrainTile tile) {
-		if ((loc.x == ourHQ.x) && (loc.y == ourHQ.y)) {
-			return false;
-		}
-		return tile == TerrainTile.NORMAL || tile == TerrainTile.ROAD;
 	}
 	
 	public static void complexCalculate() {
