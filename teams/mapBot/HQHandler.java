@@ -1,4 +1,4 @@
-package cowBot;
+package mapBot;
 
 import battlecode.common.*;
 
@@ -76,5 +76,7 @@ public class HQHandler extends UnitHandler {
 	private void calculate() throws GameActionException {
 		CowMap.calculate();
 	}
+	
+	// HQ needs a method to scan the terrain area around and broadcast how it should defend the points
 
 }

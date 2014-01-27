@@ -74,15 +74,8 @@ public class HQHandler extends UnitHandler {
 	/* Do calculations with leftover bytecode */
 	private void calculate() {
 		while (Clock.getBytecodesLeft() > 1000) {
-			// TODO: Arbitrary channel, change later
-//			int pastrLoc = determinePASTRLocation();
-//			rc.broadcast(12345, pastrLoc);
-		}
-	}
 
-	/* Determines where to build the first pastr */
-	private int determinePASTRLocation() {
-		return 0;
+		}
 	}
 
 }

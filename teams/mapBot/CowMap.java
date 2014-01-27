@@ -1,4 +1,4 @@
-package cowBot;
+package mapBot;
 
 import battlecode.common.*;
 
