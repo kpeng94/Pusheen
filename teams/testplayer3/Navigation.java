@@ -198,7 +198,9 @@ public class Navigation {
 		
 		while (intDist(start, end) > checkDist && curPathPos + 1 < path.length) {
 			end += intdirs[(mapinfo[end] % 9) - 1];
-			end += intdirs[(mapinfo[end] % 9) - 1];
+			if (intDist(start, end) > checkDist) {
+				end += intdirs[(mapinfo[end] % 9) - 1];
+			}
 			curPathPos++;
 			path[curPathPos] = end;
 		}
