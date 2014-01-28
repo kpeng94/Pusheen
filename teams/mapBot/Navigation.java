@@ -15,6 +15,8 @@ public class Navigation {
 	public static MapLocation ourHQ;
 	public static MapLocation enemyHQ;
 
+	public static boolean nearHQ; // Destination is near the enemy HQ
+	
 	public static boolean mapDone; // Able to use complex movement with HQ map
 
 	public static boolean pathDone; // Path generation complete
@@ -58,6 +60,8 @@ public class Navigation {
 	}
 	
 	public static void setDest(MapLocation destination, int rad) throws GameActionException {
+		destination = getNearestOpenDest(destination);
+		rc.setIndicatorString(0, "" + destination);
 		if (dest == null || (dest.x != destination.x && dest.y != destination.y)) {
 			pathDone = false;
 			dest = destination;
@@ -65,8 +69,28 @@ public class Navigation {
 			curCheck = rc.getLocation();
 			checkNum = 0;
 			isRoad = Map.getTile(curCheck) == 2;
+			if (dest.distanceSquaredTo(enemyHQ) <= 25) {
+				nearHQ = true;
+			}
 		}
 		radius = rad;
+	}
+	
+	/* Returns nearest movable square */
+	private static MapLocation getNearestOpenDest(MapLocation destination) throws GameActionException {
+		MapLocation newDest = destination;
+		int tile = Map.getTile(newDest);
+		int rad = 1;
+		int offset = 7;
+		while (tile == 3 || tile == 4) {
+			newDest = destination.add(dir[offset], rad);
+			tile = Map.getTile(newDest);
+			if (offset-- <= 0) {
+				offset = 7;
+				rad++;
+			}
+		}
+		return newDest;
 	}
 	
 	/* Attempts to move to within a radius around destination */
@@ -81,11 +105,15 @@ public class Navigation {
 	
 	/* Trivial movement */
 	public static void trivialMove(MapLocation mapLoc, int[] looks) throws GameActionException {
+		trivialMove(mapLoc, looks, false);
+	}
+	
+	public static void trivialMove(MapLocation mapLoc, int[] looks, boolean tryDanger) throws GameActionException {
 		MapLocation curLoc = rc.getLocation();
 		int toDest = curLoc.directionTo(mapLoc).ordinal();
 		for (int i = looks.length; i-- > 0;) {
 			Direction moveDir = dir[(toDest + looks[i] + 8) % 8];
-			if (rc.canMove(moveDir) && curLoc.add(moveDir).distanceSquaredTo(enemyHQ) > 25) {
+			if (rc.canMove(moveDir) && (tryDanger || Map.getTile(curLoc.add(moveDir)) != 5)) {
 				rc.move(moveDir);
 				return;
 			}
@@ -144,9 +172,14 @@ public class Navigation {
 				}
 				int roundNum = (mapinfo[intloc] % 90000) / 9;
 				int tile = Map.getTile(next);
-				if (tile == 3 || tile == 4) {
+				
+				if (nearHQ && (tile == 3 || tile == 4)) {
 					continue;
 				}
+				if (!nearHQ && tile > 2) {
+					continue;
+				}
+				
 				if (roundNum == 0) {
 					updateAdjacent(toInt(curCheck), isRoad ? 1 : 2);
 					curCheck = next;
