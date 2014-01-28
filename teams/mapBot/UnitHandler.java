@@ -32,7 +32,7 @@ public abstract class UnitHandler {
 	/* Executes every round */
 	public void execute() throws GameActionException {
 		if (id != 0) {
-			broadcastSelf();
+//			broadcastSelf();
 		}
 	}
 	

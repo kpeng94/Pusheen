@@ -28,14 +28,16 @@ public class Map {
 	public static void HQinit() throws GameActionException {
 		MapLocation ourHQ = rc.senseHQLocation();
 		MapLocation enemyHQ = rc.senseEnemyHQLocation();
-		rc.broadcast(mapChannels + ourHQ.x * height + ourHQ.y, 3);
-		rc.broadcast(mapChannels + enemyHQ.x * height + enemyHQ.y, 3);
-		
+
 		MapLocation[] nearEnemyHQ = MapLocation.getAllMapLocationsWithinRadiusSq(enemyHQ, 25);
 		for (int i = nearEnemyHQ.length; i-- > 0;) {
 			MapLocation danger = nearEnemyHQ[i];
-			rc.broadcast(mapChannels + danger.x * height + danger.y, 5);
+			if (danger.x >= 0 && danger.y >= 0 && danger.x < width && danger.y < height) {
+				rc.broadcast(mapChannels + danger.x * height + danger.y, 5);
+			}
 		}
+		rc.broadcast(mapChannels + ourHQ.x * height + ourHQ.y, 3);
+		rc.broadcast(mapChannels + enemyHQ.x * height + enemyHQ.y, 3);
 	}
 	
 	/**
