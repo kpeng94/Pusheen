@@ -3,8 +3,6 @@ package seedingTourneyBotv1;
 import battlecode.common.*;
 
 public class CowMap {
-	public static final Direction[] checkDirs = {Direction.SOUTH_EAST, Direction.SOUTH, Direction.EAST, Direction.NONE};
-	
 	public static RobotController rc;
 	public static int width;
 	public static int height;
@@ -80,30 +78,19 @@ public class CowMap {
 			int cury = curPos % (halfheight - 1);
 			double cows = cowMap[curx][cury] + cowMap[curx+1][cury] + cowMap[curx][cury+1] + cowMap[curx+1][cury+1];
 			if (cows > bestCows) {
-				checkBest(cows, new MapLocation(2*curx + 1, 2*cury + 1));
+				bestCows = cows;
+				bestLoc = new MapLocation(2*curx + 1, 2*cury + 1);
+				bestDist = ourHQ.distanceSquaredTo(bestLoc);
 			}
 			else if (cows == bestCows) {
 				MapLocation loc = new MapLocation(2*curx + 1, 2*cury + 1);
 				if (ourHQ.distanceSquaredTo(loc) < bestDist) {
-					checkBest(cows, loc);
+					bestCows = cows;
+					bestLoc = loc;
+					bestDist = ourHQ.distanceSquaredTo(bestLoc);
 				}
 			}
 			curPos--;
-		}
-	}
-	
-	/* Checks a 2x2 region to make sure that its not void */
-	private static void checkBest(double cows, MapLocation loc) {
-		for (int i = checkDirs.length; i-- > 0;) {
-			MapLocation newLoc = loc.add(checkDirs[i]);
-			if (newLoc.x == ourHQ.x && newLoc.y == ourHQ.y) {
-				continue;
-			}
-			if (rc.senseTerrainTile(newLoc) != TerrainTile.VOID) {
-				bestCows = cows;
-				bestLoc = newLoc;
-				bestDist = ourHQ.distanceSquaredTo(bestLoc);
-			}
 		}
 	}
 	

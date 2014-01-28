@@ -55,10 +55,9 @@ public class SoldierHandler extends UnitHandler {
 				}
 			} else if (obj == 3) {
 				bumRush();
-			} else if (obj == 4) {
-				buildNoiseTower(pastrLocation);
+
 			} else {
-				tryToBeUseful();				
+				tryToBeUseful();
 			}
 		}			
 		// There is a location for the PASTR we want to build.
@@ -77,26 +76,6 @@ public class SoldierHandler extends UnitHandler {
 		calculate();
 	}
 
-	private void buildNoiseTower(MapLocation destination) throws GameActionException {
-			// Check if 3 / 5 of the robots on our side are in decent defense position
-			if (rc.readBroadcast(30001) == 0) {
-				Navigation.setDest(destination);
-				targetLocation = destination;
-				rc.broadcast(30001, id);
-			} else if (rc.readBroadcast(30001) == id) {
-				// Change this later if they are not going in order
-				int count = 0;
-				for (int i = 5; i-- > 0;) {
-					if (rc.readBroadcast(23000 + i) != 0) {
-						count++;
-					}
-				}
-				if (count >= 4 && rc.getLocation().distanceSquaredTo(pastrLocation) <= 1 && rc.isActive()) {
-					rc.construct(RobotType.NOISETOWER);
-				}
-			}		
-	}
-
 	/**
 	 * If we really don't know what to do right now, we can try to be useful.
 	 */
@@ -111,19 +90,12 @@ public class SoldierHandler extends UnitHandler {
 	 * 1 : build a PASTR at optimal PASTR location
 	 * 2 : defend the PASTR
 	 * 3 : bum rush enemy
-	 * 4 : build noise tower
-	 * 
-	 * So here, 1 > 4 > 3 > 2 > 
-	 * 
 	 * @return 
 	 */
 	private int decideObjective() throws GameActionException {
 		if (shouldBuildPASTR()) {
 			return 1;
 		}
-		if (shouldBuildNoiseTower()) {
-			return 4;
-		}		
 		if (shouldBumRush()) {
 			return 3;
 		}
@@ -133,16 +105,6 @@ public class SoldierHandler extends UnitHandler {
 		return 0;
 	}
 	
-	/**
-	 * Checks if no one has built a noise tower yet or if 
-	 * @return
-	 * @throws GameActionException
-	 */
-	private boolean shouldBuildNoiseTower() throws GameActionException {
-		int bc = rc.readBroadcast(30001);
-		return bc == 0 || bc == id;		
-	}
-		
 	private boolean shouldBumRush() {
 		updateBumRushInfo();
 		if (bumRushing) {
@@ -213,7 +175,6 @@ public class SoldierHandler extends UnitHandler {
 	 * 20000 - 20004: information about whether or not a robot has defended a position.
 	 * 21000 - 21004: information about whether or not a robot has claimed a position to defend.
 	 * 22000 - 22004: locations that will be defended by each of these bots respectively
-	 * 23000 - 23004: information about whether or not a robot is close by to the position.
 	 * 
 	 * If all channels have been claimed by an ID, there's no need to defend it.
 	 * @return
@@ -281,7 +242,7 @@ public class SoldierHandler extends UnitHandler {
 			// Change this later if they are not going in order
 			int count = 0;
 			for (int i = 5; i-- > 0;) {
-				if (rc.readBroadcast(23000 + i) != 0) {
+				if (rc.readBroadcast(20000 + i) != 0) {
 					count++;
 				}
 			}
@@ -307,15 +268,11 @@ public class SoldierHandler extends UnitHandler {
 		if (rc.readBroadcast(30000) != id) {
 			Navigation.setDest(targetLocation);
 			// If we reached the target location, broadcast to the channel		
-			MapLocation ml = rc.getLocation();
-			if (targetLocation.x != -1) { 
-				if (ml.x == targetLocation.x && ml.y == targetLocation.y) {
-					reachedDestination = true;
-					rc.broadcast(channelClaimed - 1000, id);
-				} else if (ml.distanceSquaredTo(targetLocation) <= 2){
-					rc.broadcast(channelClaimed + 2000, id);
-				}
-			}
+			if (targetLocation.x != -1 && (rc.getLocation().x == targetLocation.x &&
+										   rc.getLocation().y == targetLocation.y)) {
+				reachedDestination = true;
+				rc.broadcast(channelClaimed - 1000, id);
+			}			
 		}
 	}
 	
@@ -387,28 +344,16 @@ public class SoldierHandler extends UnitHandler {
 
 	private void checkToFillSpots() throws GameActionException {
 		if (rc.readBroadcast(30000) == id) {
-			rc.setIndicatorString(0, ""+id);
-			rc.setIndicatorString(1, "pastr");
 		    rc.broadcast(15000, Clock.getRoundNum());
     	} else if (rc.readBroadcast(21000) == id) {
-    		rc.setIndicatorString(0, ""+id);
-    		rc.setIndicatorString(1, "defend");
-    		rc.broadcast(15001, Clock.getRoundNum());
+		    rc.broadcast(15001, Clock.getRoundNum());
 		} else if (rc.readBroadcast(21001) == id) {
-    		rc.setIndicatorString(0, ""+id);
-    		rc.setIndicatorString(1, "defend");
 		    rc.broadcast(15002, Clock.getRoundNum());
 		} else if (rc.readBroadcast(21002) == id) {
-    		rc.setIndicatorString(0, ""+id);
-    		rc.setIndicatorString(1, "defend");
 		    rc.broadcast(15003, Clock.getRoundNum());
 		} else if (rc.readBroadcast(21003) == id) {
-    		rc.setIndicatorString(0, ""+id);
-    		rc.setIndicatorString(1, "defend");
 		    rc.broadcast(15004, Clock.getRoundNum());
 		} else if (rc.readBroadcast(21004) == id) {
-    		rc.setIndicatorString(0, ""+id);
-    		rc.setIndicatorString(1, "defend");
 		    rc.broadcast(15005, Clock.getRoundNum());
 		}
 	}

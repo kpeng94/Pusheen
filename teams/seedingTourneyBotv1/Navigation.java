@@ -58,7 +58,7 @@ public class Navigation {
 	}
 	
 	public static void setDest(MapLocation destination, int rad) {
-		if (dest == null || (dest.x != destination.x && dest.y != destination.y)) {
+		if (dest != destination) {
 			pathDone = false;
 			dest = destination;
 			mapinfo = new int[width * height];
@@ -81,11 +81,10 @@ public class Navigation {
 	
 	/* Trivial movement */
 	public static void trivialMove(MapLocation mapLoc, int[] looks) throws GameActionException {
-		MapLocation curLoc = rc.getLocation();
-		int toDest = curLoc.directionTo(mapLoc).ordinal();
+		int toDest = rc.getLocation().directionTo(mapLoc).ordinal();
 		for (int i = looks.length; i-- > 0;) {
 			Direction moveDir = dir[(toDest + looks[i] + 8) % 8];
-			if (rc.canMove(moveDir) && curLoc.add(moveDir).distanceSquaredTo(enemyHQ) > 25) {
+			if (rc.canMove(moveDir)) {
 				rc.move(moveDir);
 				return;
 			}
@@ -198,9 +197,7 @@ public class Navigation {
 		
 		while (intDist(start, end) > checkDist && curPathPos + 1 < path.length) {
 			end += intdirs[(mapinfo[end] % 9) - 1];
-			if (intDist(start, end) > checkDist) {
-				end += intdirs[(mapinfo[end] % 9) - 1];
-			}
+			end += intdirs[(mapinfo[end] % 9) - 1];
 			curPathPos++;
 			path[curPathPos] = end;
 		}
