@@ -7,9 +7,7 @@ public class Map {
 	
 	public static RobotController rc;
 	public static int width;
-	public static int height;
-	
-	public static boolean initialized; // used for HQ
+	public static int height; 
 	
 	public static int curCheck;
 	public static int curX;
@@ -32,7 +30,7 @@ public class Map {
 		MapLocation[] nearEnemyHQ = MapLocation.getAllMapLocationsWithinRadiusSq(enemyHQ, 25);
 		for (int i = nearEnemyHQ.length; i-- > 0;) {
 			MapLocation danger = nearEnemyHQ[i];
-			if (danger.x >= 0 && danger.y >= 0 && danger.x < width && danger.y < height) {
+			if (getTile(danger) < 3) {
 				rc.broadcast(mapChannels + danger.x * height + danger.y, 5);
 			}
 		}
@@ -42,7 +40,7 @@ public class Map {
 	
 	/**
 	 * Gets the terrain tile represented as an integer:
-	 * 0 : Unknown
+	 * 0 : Unknown (this should never be returned from this function)
 	 * 1 : Normal
 	 * 2 : Road
 	 * 3 : Void
@@ -50,6 +48,9 @@ public class Map {
 	 * 5 : Danger (near enemy HQ)
 	 */
 	public static int getTile(MapLocation loc) throws GameActionException {
+		if (loc.x < 0 || loc.y < 0 || loc.x >= width || loc.y >= height) {
+			return 4;
+		}
 		int channel = mapChannels + loc.x * height + loc.y;
 		int tile = rc.readBroadcast(channel);
 		if (tile > 0) {
@@ -62,6 +63,9 @@ public class Map {
 	
 	// Duplicated to save bytecodes
 	public static int getTile(int x, int y) throws GameActionException {
+		if (x < 0 || y < 0 || x >= width || y >= height) {
+			return 4;
+		}
 		int channel = mapChannels + x * height + y;
 		int tile = rc.readBroadcast(channel);
 		if (tile > 0) {
