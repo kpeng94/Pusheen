@@ -44,7 +44,7 @@ public class Navigationv2 {
 		enemyHQ = rc.senseEnemyHQLocation();
 
 		intdirs = new int[] {-1, height - 1, height, height + 1, 1, 1 - height, -height, -1 - height};
-		beamWidth = 50;
+		beamWidth = 100;
 		
 		if (destination == null) {
 			destination = new MapLocation(width/2, height/2);
@@ -116,7 +116,7 @@ public class Navigationv2 {
 	
 	private static void moveNext() throws GameActionException {
 		if (pathDone) {
-			if (rc.getLocation().isAdjacentTo(fromInt(path[curPath] - 1))) {
+			if (rc.getLocation().distanceSquaredTo(fromInt(path[curPath] - 1)) <= 1) {
 				curPath++;
 			}
 			while (path[curPath] == 0) {
@@ -138,9 +138,9 @@ public class Navigationv2 {
 		}
 		while (Clock.getBytecodesLeft() > bytelimit && beamLength > 0) {
 			int cur = beamList[beamStart] - 1;
-			System.out.println(cur / height + " " + cur % height);
 			if (dest.x == cur / height && dest.y == cur % height) {
 				backTrace();
+				printMap();
 				pathDone = true;
 				return;
 			}
@@ -151,16 +151,21 @@ public class Navigationv2 {
 					break;
 				}
 				int nextDir = (toDest + reversedAll[i]) % 8;
-				int next = cur + intdirs[nextDir];
-				int tile = Map.getTile(next / height, next % height);
-				if (tile == 3 || tile == 4 || (mapInfo[next] != 0 && mapInfo[next] / 8 <= depth + 1)) {
+				int tile = Map.getTile(new MapLocation(cur / height, cur % height).add(dir[nextDir]));
+				if (tile == 3 || tile == 4) {
 					continue;
 				}
+				int next = cur + intdirs[nextDir];
+				if (next == start || (mapInfo[next] != 0 && mapInfo[next] / 8 <= depth + 1)) {
+					continue;
+				}
+				if (mapInfo[next] == 0) {
+					nextBeam[beamEnd++] = next + 1;
+				}
 				mapInfo[next] = (depth + 1) * 8 + ((nextDir + 4) % 8);
-				nextBeam[beamEnd++] = next + 1;
 			}
 			if (++beamStart == beamLength || beamEnd == beamWidth) {
-				beamList = nextBeam;
+				beamList = nextBeam.clone();
 				beamLength = beamEnd;
 				beamStart = 0;
 				beamEnd = 0;
@@ -189,6 +194,16 @@ public class Navigationv2 {
 	
 	public static int toInt(int x, int y) {
 		return x * height + y;
+	}
+	
+	private static void printMap() {
+		for (int i = 0; i < width; i++) {
+			String s = "";
+			for (int j = 0; j < height; j++) {
+				s += " " + mapInfo[toInt(j,i)] / 8;
+			}
+			System.out.println("Row " + i + ":" + s);
+		}
 	}
 	
 }
