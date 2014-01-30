@@ -4,8 +4,8 @@ import battlecode.common.*;
 
 public class Navigation {
 	static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
-	static final int[] reversedAll = new int[] {4, -3, 3, -2, 2, -1, 1, 0};
-	static final int[] reversedForward = new int[] {-1, 1, 0};
+	static final int[] reversedAll = new int[] {4, 5, 3, 6, 2, 7, 1, 0};
+	static final int[] reversedForward = new int[] {7, 1, 0};
 	static final int checkDist = 4;
 	
 	public static int[] intdirs;
@@ -61,7 +61,6 @@ public class Navigation {
 	
 	public static void setDest(MapLocation destination, int rad) throws GameActionException {
 		destination = getNearestOpenDest(destination);
-		rc.setIndicatorString(0, "" + destination);
 		if (dest == null || (dest.x != destination.x && dest.y != destination.y)) {
 			pathDone = false;
 			dest = destination;
@@ -112,7 +111,7 @@ public class Navigation {
 		MapLocation curLoc = rc.getLocation();
 		int toDest = curLoc.directionTo(mapLoc).ordinal();
 		for (int i = looks.length; i-- > 0;) {
-			Direction moveDir = dir[(toDest + looks[i] + 8) % 8];
+			Direction moveDir = dir[(toDest + looks[i]) % 8];
 			if (rc.canMove(moveDir) && (tryDanger || Map.getTile(curLoc.add(moveDir)) != 5)) {
 				rc.move(moveDir);
 				return;
@@ -165,7 +164,7 @@ public class Navigation {
 			boolean minRoad = false;
 			
 			for (int i = 8; i-- > 0;) {
-				MapLocation next = curCheck.add(dir[(toDest + reversedAll[i] + 8) % 8]);
+				MapLocation next = curCheck.add(dir[(toDest + reversedAll[i]) % 8]);
 				int intloc = toInt(next);
 				if (intloc < 0 || intloc > width * height) {
 					continue;
@@ -239,14 +238,7 @@ public class Navigation {
 		}
 		
 		pathMove();
-		
-//		Direction moveDir = dir[(backDir + 4) % 8];
-//		
-//		if (rc.canMove(moveDir)) {
-//			mapinfo[start] = 90000 + (checkNum * 9) + (backDir + 4) % 8 + 1;
-//			checkNum++;
-//			rc.move(moveDir);
-//		}
+
 	}
 	
 	private static void pathMove() throws GameActionException {
