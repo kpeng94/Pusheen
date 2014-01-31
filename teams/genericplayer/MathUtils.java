@@ -18,7 +18,7 @@ public class MathUtils {
 			else if(e < 0){
 				return Direction.SOUTH;
 			}
-			return Direction.OMNI;
+			return Direction.NONE;
 		}
 		
 		double tangent = e/d;
