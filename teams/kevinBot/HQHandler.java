@@ -33,9 +33,18 @@ import battlecode.common.*;
  * 30004 - 30010: What the HQ will consider to be "safe" locations.
  * 
  * 
- * 35000: Leader of the swarm
+ * 35000 - 35009: Squadron leaders
+ * 35010 - 35019: Squadron locations roughly
  * 
- * 39400 - 39499:
+ * 
+ * 39300 - 39399: Squadron number (for attackers and pastr builders)
+ * 39400 - 39499: HQ designates what each robots goal is.
+ * 		1: Attack
+ * 		2: Get PASTR
+ * 		3: Scout
+ * 		4: Build PASTR
+ * 		5: Build NT
+ * 		6: Defend
  * 39500 - 39599: Robots know they have already been suicided on.
  * 39600 - 39699: Robots know they're being attacked.					
  * 39700 - 39799: Robots think that they're about to get suicided on.

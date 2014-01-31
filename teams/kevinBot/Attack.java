@@ -7,8 +7,9 @@ import battlecode.common.*;
 public class Attack {
 	private static final Direction[] directions = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, 
 												   Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
-	private static Robot[] closeEnemies;
-	private static Robot[] detectableEnemies;
+	private static Robot[] reallyCloseEnemies; // Within 5 squared distance
+	private static Robot[] closeEnemies; // Within 10 squared distance
+	private static Robot[] detectableEnemies; // Within 35 squared distance
 	private static RobotController rc;
 	private static MapLocation myHQLocation;
 	private static MapLocation enemyHQLocation;
@@ -27,6 +28,7 @@ public class Attack {
 	private static double healthThisRound = 100;
 	private static boolean beingAttacked = false;
 	private static boolean beingSDed = false;
+	private static int goal = 0;
 	
 	/**
 	 * INITIALIZATION
@@ -111,7 +113,9 @@ public class Attack {
 	 * Method for the attack micro. Flow:
 	 * 1. We gather information about all enemies in range.
 	 * 2. We gather information about our unit force compared to their unit force.
-	 * 3. Consider: Need to take down their PASTR, or just fighting 
+	 * 3. Consider: Need to take down their PASTR, or just fighting, or defending.
+	 * 4. If just fighting or defending, we want to find defensively.
+	 * 5. 
 	 * @throws GameActionException
 	 */
 	public static void attackMicro() throws GameActionException {
@@ -122,7 +126,7 @@ public class Attack {
 		numberOfUnitsTheyHave = rc.readBroadcast(37001);
 		healthLastRound = healthThisRound;
 		healthThisRound = rc.getHealth();
-
+		goal = rc.readBroadcast(39400 + id);
 		// Let teammates know you are being hurt
 		if (healthThisRound < healthLastRound) {
 			// Let teammates know that you are being attacked by a bot
@@ -134,6 +138,14 @@ public class Attack {
 				rc.broadcast(39500 + id, 1);
 				beingSDed = true;
 			}
+		}
+		
+		if (goal == 1) {
+			// mostly attack and retreat micro here
+		} else if (goal == 2) {
+			
+		} else if (goal == 3) {
+			
 		}
 		
 		// Predict what your teammates are going to do and calculate and move as a result (if we can)
@@ -150,7 +162,8 @@ public class Attack {
 	public static Direction highPDir() {
 		return Direction.NONE;
 	}
-	public static MapLocation findClosestEnemy(Robot[] eInRange) throws GameActionException {
+	
+	public static MapLocation findClosestEnemyLoc(Robot[] eInRange) throws GameActionException {
 		MapLocation closestML = null;
 		int distance = 100000;
 		for (int i = eInRange.length; i-- > 0;) {
@@ -162,6 +175,19 @@ public class Attack {
 			}
 		}
 		return closestML;
+	}
+
+	public static MapLocation findLowHPTarget(Robot[] nearbyEnemies) throws GameActionException {
+		double health = 1000;
+		MapLocation lowestHealthTargetLocation = rc.senseEnemyHQLocation();
+		for (int i = nearbyEnemies.length; i-- > 0;) {
+			RobotInfo info = rc.senseRobotInfo(nearbyEnemies[i]);
+			if (info.type != RobotType.HQ && rc.canAttackSquare(info.location) && info.health < health) {
+				health = info.health;
+				lowestHealthTargetLocation = info.location;				
+			}
+		}
+		return lowestHealthTargetLocation;
 	}
 	
 	public static void goHeal() {
@@ -209,7 +235,10 @@ public class Attack {
 		return false;
 	}
 
-	private void decideFightingMechanic() {
+	/**
+	 * For attacking mode
+	 */
+	private void decideFightingMechanic() throws GameActionException {
 		if (numberOfUnitsWeHave - numberOfUnitsTheyHave >= 5 && numberOfUnitsWeHave >= numberOfUnitsTheyHave * 2) {
 			attackAndRetreat();
 		} else if (numberOfUnitsWeHave - numberOfUnitsTheyHave <= -2) {
@@ -219,15 +248,27 @@ public class Attack {
 		}
 	}
 	
-	private void attackAndRetreat() {
+	/**
+	 * Attack and run away as necessary.
+	 * @throws GameActionException
+	 */
+	private void attackAndRetreat() throws GameActionException {
+		if (reallyCloseEnemies.length >= 1) {
+			MapLocation ml = findClosestEnemyLoc(reallyCloseEnemies);
+			Direction dte = myLocation.directionTo(ml);
+			retreat(false, false);
+		} else if (closeEnemies.length >= 1) {
+			MapLocation ml = findClosestEnemyLoc(closeEnemies);
+		} else {
+			MapLocation ml = findClosestEnemyLoc(detectableEnemies);
+		}
+	}
+	
+	private void justRetreat() throws GameActionException {
 		
 	}
 	
-	private void justRetreat() {
-		
-	}
-	
-	private void suicideAttackAndRetreat() {
+	private void suicideAttackAndRetreat() throws GameActionException {
 		
 	}
 	
