@@ -195,6 +195,12 @@ public class Attack {
 		return closestML;
 	}
 
+	/**
+	 * Gets map location of bot with lowest HP
+	 * @param nearbyEnemies
+	 * @return
+	 * @throws GameActionException
+	 */
 	public static MapLocation findLowestHP(Robot[] nearbyEnemies) throws GameActionException {
 		double health = 1000;
 		MapLocation lowestHealthTargetLocation = rc.senseEnemyHQLocation();
@@ -461,17 +467,12 @@ public class Attack {
 		return false;
 	}
 	
-	private static void takeStep(MapLocation ml1, MapLocation ml2, int w1, int w2) {
+	private static void takeStep(MapLocation ml1, MapLocation ml2, int w1, int w2) throws GameActionException {
 		int avgX = (w1 * (myLocation.x - ml1.x) + w2 * (myLocation.y - ml1.y)) / (w1 + w2);
 		int avgY = (w1 * (myLocation.y - ml1.y) * w2 * (myLocation.y - ml2.y)) / (w1 + w2);
-		Math.atan2(avgY, avgX);
-		if (avgY >= 0) {
-			if (avgY >= 2.4 * avgX) {
-//				if (rc.canMove(Direction))
-			}
-		}
-		if (avgY > 0 && avgX > 0) {
-			
+		Direction dir = ml1.directionTo(new MapLocation(ml1.x + avgX, ml2.y + avgY));
+		if (rc.isActive() && rc.canMove(dir)) {
+			rc.move(dir);
 		}
 	}
 	

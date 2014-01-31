@@ -91,7 +91,8 @@ public class HQHandler extends UnitHandler {
 	int[] spawnlist;
 	int numberOfRobots = 0;
 	int numberOfNoiseTowers = 0;
-
+	int[] robotsAlive = new int[25];
+	
 	public HQHandler(RobotController rcin) throws GameActionException {
 		super(rcin);
 		myHQLoc = rc.senseHQLocation();
@@ -135,6 +136,15 @@ public class HQHandler extends UnitHandler {
 			}
 			if (rc.senseObjectAtLocation(spawnLoc) == null) {
 				rc.spawn(dir[spawnlist[i]]);
+				/**
+				 * Update number of robots in bc system. Update which robots are alive in bc system.
+				 * Update number of robots internally. Update which robots are alive internally.
+				 * Update squadron for newly spawned robot. 
+				 */
+				
+//				TODO: UPDATE SQUADRON NUMBERS LATER
+				rc.broadcast(39300 + rc.readBroadcast(0), 1);
+				updateLiveRobots();
 				numberOfRobots++;
 				return;
 			}
@@ -186,24 +196,31 @@ public class HQHandler extends UnitHandler {
 		int firstSet = 0;
 		int secondSet = 0;
 		int thirdSet = 0;
+		int aliveCount = 0;
 		for (int i = 30; i-- > 0;) {
 			firstSet <<= 1;
-			if (rc.readBroadcast(39900 + i) == Clock.getRoundNum() - 1) {
+			if (rc.readBroadcast(39901 + i) == Clock.getRoundNum() - 1) {
 				firstSet++;
+				robotsAlive[aliveCount] = i;
+				aliveCount++;
 			}
 		}
 		rc.broadcast(30001, firstSet);
 		for (int i = 30; i-- > 0;) {
 			secondSet <<= 1;
-			if (rc.readBroadcast(39930 + i) == Clock.getRoundNum() - 1) {
+			if (rc.readBroadcast(39931 + i) == Clock.getRoundNum() - 1) {
 				secondSet++;
+				robotsAlive[aliveCount] = i;
+				aliveCount++;				
 			}
 		}
 		rc.broadcast(30002, secondSet);
 		for (int i = 30; i-- > 0;) {
 			thirdSet <<= 1;
-			if (rc.readBroadcast(39960 + i) == Clock.getRoundNum() - 1) {
+			if (rc.readBroadcast(39961 + i) == Clock.getRoundNum() - 1) {
 				thirdSet++;
+				robotsAlive[aliveCount] = i;
+				aliveCount++;
 			}
 		}
 		rc.broadcast(30003, thirdSet);
@@ -256,6 +273,16 @@ public class HQHandler extends UnitHandler {
 		boolean ignoreBottom = rc.getMapWidth() - enemyHQLoc.y <= 10;
 		int count = 0;
 		broadcastSurroundLocations(!ignoreTop, !ignoreRight, !ignoreBottom, !ignoreLeft, true);
+	}
+
+	private void squadronSplit() {
+		
+	}
+	
+	private void updateSquadrons() {
+		if (Clock.getRoundNum() < 1000) {
+			
+		}
 	}
 	
 	private void broadcastSurroundLocations(boolean top, boolean right, boolean bottom, boolean left, 
