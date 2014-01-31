@@ -88,19 +88,16 @@ public class Attack {
 				surrounding = true;
 			} 
 			if (isOccupied(off)) {
-				rc.setIndicatorString(2, "2: " + rc.readBroadcast(26014) + " huh " + rc.readBroadcast(26013) + " next: " + rc.readBroadcast(26012));
 				while (off > 0 && isOccupied(off)) {
 					off--;
 					int mlint = rc.readBroadcast(26000 + off);
 					mySurroundDestination = new MapLocation(mlint / 100, mlint % 100);
 				}					
-				rc.setIndicatorString(0, "0: " + mySurroundDestination + " what the L: " + off + " wow: " + isOccupied(off));
 				Navigation.setDest(mySurroundDestination);
 				offTarget = off;
 			}
 			return false;
 		}
-		rc.setIndicatorString(1, "1: I am at the point now.");
 		rc.broadcast(27000 + offTarget, id);
 		return true;
 	}
@@ -177,7 +174,7 @@ public class Attack {
 		return closestML;
 	}
 
-	public static MapLocation findLowHPTarget(Robot[] nearbyEnemies) throws GameActionException {
+	public static MapLocation findLowestHP(Robot[] nearbyEnemies) throws GameActionException {
 		double health = 1000;
 		MapLocation lowestHealthTargetLocation = rc.senseEnemyHQLocation();
 		for (int i = nearbyEnemies.length; i-- > 0;) {
@@ -202,37 +199,28 @@ public class Attack {
 	 * Telling the other robots where you will hypothetically go.
 	 * 
 	 * @param considerWalls If we should take into account walls or not
+	 * @param groupEscape
+	 * @param enemyDir
+	 * @param ml Assumed to be the closest enemy (TODO: tweak for multiple closest later)
+	 * @return
+	 * @throws GameActionException
 	 */
-	public static boolean retreat(boolean considerWalls, boolean groupEscape) throws GameActionException {
-		myLocation = rc.getLocation();
-		Robot[] nearby = rc.senseNearbyGameObjects(Robot.class, 20, rc.getTeam().opponent());
-		Robot[] nearbyRobots = rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
-		if (nearby.length >= 1) {
-			retreatMode = true;
-			// TODO: Change this later to calculate
-			MapLocation closestEnemyLoc = rc.senseRobotInfo(nearbyRobots[0]).location; 
-			Direction enemyDir = rc.getLocation().directionTo(closestEnemyLoc);
-			if (retreatMode == true) {
-				Direction oppositeDir = directions[(enemyDir.ordinal() + 6) % 8];
-				int maxDistance = rc.getLocation().distanceSquaredTo(closestEnemyLoc);
-				for (int i = 4; i-- > 0;) {
-					Direction dirAdd = directions[(enemyDir.ordinal() + i + 2) % 8];
-					int newDistance = rc.getLocation().add(dirAdd).distanceSquaredTo(closestEnemyLoc);
-					if (newDistance > maxDistance) {
-						oppositeDir = directions[(enemyDir.ordinal() + i + 2) % 8];
-						maxDistance = newDistance;
-					}
-				}
-				Direction toMyHQ = myLocation.directionTo(myHQLocation);
-				int hqCloseness = myLocation.distanceSquaredTo(myHQLocation);
-				rc.setIndicatorString(1, "HQ ordinal: " + toMyHQ.ordinal() + " ord ordinal: " + oppositeDir.ordinal());
-				rc.setIndicatorString(2, "retreat mode  " + Clock.getRoundNum());
-				takeStep(oppositeDir, toMyHQ, hqCloseness, 100);
-				return true;
+	public static boolean retreat(boolean groupEscape, 
+								  Direction enemyDir, MapLocation ml) throws GameActionException {
+		Direction oppositeDir = directions[(enemyDir.ordinal() + 6) % 8];
+		int maxDistance = rc.getLocation().distanceSquaredTo(ml);
+		for (int i = 4; i-- > 0;) {
+			Direction dirAdd = directions[(enemyDir.ordinal() + i + 2) % 8];
+			int newDistance = rc.getLocation().add(dirAdd).distanceSquaredTo(ml);
+			if (newDistance > maxDistance) {
+				oppositeDir = directions[(enemyDir.ordinal() + i + 2) % 8];
+				maxDistance = newDistance;
 			}
-			
 		}
-		return false;
+		Direction toMyHQ = myLocation.directionTo(myHQLocation);
+		int hqCloseness = myLocation.distanceSquaredTo(myHQLocation);
+		takeStep(oppositeDir, toMyHQ, hqCloseness, 100);
+		return true;			
 	}
 
 	/**
@@ -256,9 +244,13 @@ public class Attack {
 		if (reallyCloseEnemies.length >= 1) {
 			MapLocation ml = findClosestEnemyLoc(reallyCloseEnemies);
 			Direction dte = myLocation.directionTo(ml);
-			retreat(false, false);
+			retreat(false, dte, ml);
 		} else if (closeEnemies.length >= 1) {
-			MapLocation ml = findClosestEnemyLoc(closeEnemies);
+//			MapLocation ml = findClosestEnemyLoc(closeEnemies);
+			MapLocation ml = findLowestHP(closeEnemies);
+			if (rc.isActive() && rc.canAttackSquare(ml)) {
+				rc.attackSquare(ml);
+			}
 		} else {
 			MapLocation ml = findClosestEnemyLoc(detectableEnemies);
 		}
@@ -316,6 +308,7 @@ public class Attack {
 	 * Bytecode cost: 100
 	 */
 	private static void storeEnemiesWithinRange() {
+		reallyCloseEnemies = rc.senseNearbyGameObjects(Robot.class, 8, rc.getTeam().opponent());
 		closeEnemies = rc.senseNearbyGameObjects(Robot.class, 10, rc.getTeam().opponent());
 		detectableEnemies = rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
 	}
