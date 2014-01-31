@@ -36,9 +36,9 @@ import battlecode.common.*;
  * 31001: # of NTs
  * 
  * 35000 - 35009: Squadron leaders
- * 35010 - 35019: Squadron locations roughly
+ * 35010 - 35019: Squadron locations roughly (avg)
  * 35020 - 35029: Squadron army size
- * 
+ * 35030 - 35039: Squadron target locations
  * 
  * 39300 - 39399: Squadron number (for attackers and pastr builders)
  * 39400 - 39499: HQ designates what each robots goal is.
@@ -91,6 +91,7 @@ public class HQHandler extends UnitHandler {
 	private static int[] squadronFour;
 	private static int[] squadronFive;
 	private static int[] squadronSix;
+	private static int robotIDs = 0;
 	
 	MapLocation myHQLoc, enemyHQLoc;
 	boolean curAttack;
@@ -202,37 +203,44 @@ public class HQHandler extends UnitHandler {
 	 * Rough bytecode cost:
 	 */
 	private void updateLiveRobots() throws GameActionException {
-		int firstSet = 0;
-		int secondSet = 0;
-		int thirdSet = 0;
-		int aliveCount = 0;
-		for (int i = 30; i-- > 0;) {
-			firstSet <<= 1;
-			if (rc.readBroadcast(39901 + i) == Clock.getRoundNum() - 1) {
-				firstSet++;
-				robotsAlive[aliveCount] = i;
-				aliveCount++;
+		if (Clock.getRoundNum() % 10 == 0) {
+			int firstSet = 0;
+			int secondSet = 0;
+			int thirdSet = 0;
+			int aliveCount = 0;
+			
+			// Go only up to RobotIDs
+			for (int i = 30; i-- > 0;) {
+				firstSet <<= 1;
+				int bc = rc.readBroadcast(39901 + i);
+				if (bc == Clock.getRoundNum() - 1) {
+					firstSet++;
+					robotsAlive[aliveCount] = i;
+					aliveCount++;
+				}
 			}
-		}
-		rc.broadcast(30001, firstSet);
-		for (int i = 30; i-- > 0;) {
-			secondSet <<= 1;
-			if (rc.readBroadcast(39931 + i) == Clock.getRoundNum() - 1) {
-				secondSet++;
-				robotsAlive[aliveCount] = i;
-				aliveCount++;				
+			rc.broadcast(30001, firstSet);		
+			for (int i = 30; i-- > 0;) {
+				secondSet <<= 1;
+				if (rc.readBroadcast(39931 + i) == Clock.getRoundNum() - 1) {
+					secondSet++;
+					robotsAlive[aliveCount] = i;
+					aliveCount++;				
+				}
 			}
-		}
-		rc.broadcast(30002, secondSet);
-		for (int i = 30; i-- > 0;) {
-			thirdSet <<= 1;
-			if (rc.readBroadcast(39961 + i) == Clock.getRoundNum() - 1) {
-				thirdSet++;
-				robotsAlive[aliveCount] = i;
-				aliveCount++;
+			rc.broadcast(30002, secondSet);
+			
+			// Maybe exclude this!
+			for (int i = 30; i-- > 0;) {
+				thirdSet <<= 1;
+				if (rc.readBroadcast(39961 + i) == Clock.getRoundNum() - 1) {
+					thirdSet++;
+					robotsAlive[aliveCount] = i;
+					aliveCount++;
+				}
 			}
+			rc.broadcast(30003, thirdSet);			
 		}
-		rc.broadcast(30003, thirdSet);
 	}
 	
 	/**
