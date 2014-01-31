@@ -35,6 +35,7 @@ import battlecode.common.*;
  * 
  * 35000: Leader of the swarm
  * 
+ * 39400 - 39499:
  * 39500 - 39599: Robots know they have already been suicided on.
  * 39600 - 39699: Robots know they're being attacked.					
  * 39700 - 39799: Robots think that they're about to get suicided on.

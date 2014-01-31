@@ -25,6 +25,8 @@ public class Attack {
 	private static int numberOfUnitsTheyHave;
 	private static double healthLastRound = 100;
 	private static double healthThisRound = 100;
+	private static boolean beingAttacked = false;
+	private static boolean beingSDed = false;
 	
 	/**
 	 * INITIALIZATION
@@ -105,9 +107,17 @@ public class Attack {
 		return rc.readBroadcast(27000 + locNum) != 0;
 	}
 	
+	/**
+	 * Method for the attack micro. Flow:
+	 * 1. We gather information about all enemies in range.
+	 * 2. We gather information about our unit force compared to their unit force.
+	 * 3. Consider: Need to take down their PASTR, or just fighting 
+	 * @throws GameActionException
+	 */
 	public static void attackMicro() throws GameActionException {
 		storeEnemiesWithinRange();
 		// TODO: Make HQ actually produce this 
+		myLocation = rc.getLocation();
 		numberOfUnitsWeHave = rc.readBroadcast(37000);
 		numberOfUnitsTheyHave = rc.readBroadcast(37001);
 		healthLastRound = healthThisRound;
@@ -117,19 +127,42 @@ public class Attack {
 		if (healthThisRound < healthLastRound) {
 			// Let teammates know that you are being attacked by a bot
 			rc.broadcast(39600 + id, 1);
+			beingAttacked = true;
 			// We know we've been suicided on because the difference in health is not 0
 			// TODO: We should account for some error here 
 			if ((healthLastRound - healthThisRound) % 10 != 0) {
 				rc.broadcast(39500 + id, 1);
+				beingSDed = true;
 			}
 		}
 		
 		// Predict what your teammates are going to do and calculate and move as a result (if we can)
+
 		if (healthThisRound <= 20) {
 			goHeal();
 		}
 	}
 
+	/**
+	 * Computes the direction that I would most likely move in next move
+	 * @return
+	 */
+	public static Direction highPDir() {
+		return Direction.NONE;
+	}
+	public static MapLocation findClosestEnemy(Robot[] eInRange) throws GameActionException {
+		MapLocation closestML = null;
+		int distance = 100000;
+		for (int i = eInRange.length; i-- > 0;) {
+			RobotInfo ri = rc.senseRobotInfo(eInRange[i]);
+			int nd = myLocation.distanceSquaredTo(ri.location);
+			if (nd < distance) {
+				closestML = ri.location;
+				distance = nd;
+			}
+		}
+		return closestML;
+	}
 	
 	public static void goHeal() {
 		Navigation.setDest(myHQLocation);
