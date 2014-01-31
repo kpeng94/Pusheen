@@ -5,9 +5,9 @@ import battlecode.common.*;
 public class MathUtils {
 	
 	public static double TAN_TWENTY_TWO = 0.557852;
-	public static double TAN_SEVENTY_SEVEN = 4.51071;
+	public static double TAN_SIXTY_SEVEN = 2.41421;
 	public static double NEG_TAN_TWENTY_TWO = -0.557852;
-	public static double NEG_TAN_SEVENTY_SEVEN = -4.51071;
+	public static double NEG_TAN_SIXTY_SEVEN = -2.41421;
 	
 	
 	public static Direction getClosestDirection(double d, double e){
@@ -28,7 +28,7 @@ public class MathUtils {
 				if(tangent < TAN_TWENTY_TWO){
 					return Direction.EAST;
 				}
-				else if(tangent > TAN_SEVENTY_SEVEN){
+				else if(tangent > TAN_SIXTY_SEVEN){
 					return Direction.NORTH;
 				}
 				return Direction.NORTH_EAST;
@@ -37,7 +37,7 @@ public class MathUtils {
 				if(tangent > NEG_TAN_TWENTY_TWO){
 					return Direction.EAST;
 				}
-				else if(tangent < NEG_TAN_SEVENTY_SEVEN){
+				else if(tangent < NEG_TAN_SIXTY_SEVEN){
 					return Direction.SOUTH;
 				}
 				return Direction.SOUTH_EAST;
@@ -48,7 +48,7 @@ public class MathUtils {
 				if(tangent > NEG_TAN_TWENTY_TWO){
 					return Direction.WEST;
 				}
-				else if(tangent < NEG_TAN_SEVENTY_SEVEN){
+				else if(tangent < NEG_TAN_SIXTY_SEVEN){
 					return Direction.NORTH;
 				}
 				return Direction.NORTH_WEST;
@@ -57,7 +57,7 @@ public class MathUtils {
 				if(tangent < TAN_TWENTY_TWO){
 					return Direction.WEST;
 				}
-				else if(tangent > TAN_SEVENTY_SEVEN){
+				else if(tangent > TAN_SIXTY_SEVEN){
 					return Direction.SOUTH;
 				}
 				return Direction.SOUTH_WEST;
