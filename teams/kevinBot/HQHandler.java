@@ -98,7 +98,7 @@ public class HQHandler extends UnitHandler {
 	int[] spawnlist;
 	int numberOfRobots = 0;
 	int numberOfNoiseTowers = 0;
-	int[] robotsAlive = new int[25];
+	int[] robotsAlive = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 	
 	public HQHandler(RobotController rcin) throws GameActionException {
 		super(rcin);
@@ -240,6 +240,9 @@ public class HQHandler extends UnitHandler {
 				}
 			}
 			rc.broadcast(30003, thirdSet);			
+			for (int i = aliveCount; i < 25; i++) {
+				robotsAlive[aliveCount] = -1;
+			}
 		}
 	}
 	
