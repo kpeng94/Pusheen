@@ -4,9 +4,9 @@ import battlecode.common.*;
 
 public class MathUtils {
 	
-	public static double TAN_TWENTY_TWO = 0.557852;
+	public static double TAN_TWENTY_TWO = 0.414214;
 	public static double TAN_SIXTY_SEVEN = 2.41421;
-	public static double NEG_TAN_TWENTY_TWO = -0.557852;
+	public static double NEG_TAN_TWENTY_TWO = -0.414214;
 	public static double NEG_TAN_SIXTY_SEVEN = -2.41421;
 	
 	
