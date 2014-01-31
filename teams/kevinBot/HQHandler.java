@@ -85,6 +85,12 @@ public class HQHandler extends UnitHandler {
 	private static final int[] osblYR = {1, 2, 3, 4, 5, 5, 5, 5};
 	private static final int[] osbrXR = {1, 2, 3, 4, 5, 5, 5, 5};
 	private static final int[] osbrYR = {5, 5, 5, 4, 3, 2, 1, 0};
+	private static int[] squadronOne;
+	private static int[] squadronTwo;
+	private static int[] squadronThree;
+	private static int[] squadronFour;
+	private static int[] squadronFive;
+	private static int[] squadronSix;
 	
 	MapLocation myHQLoc, enemyHQLoc;
 	boolean curAttack;
@@ -140,10 +146,13 @@ public class HQHandler extends UnitHandler {
 				 * Update number of robots in bc system. Update which robots are alive in bc system.
 				 * Update number of robots internally. Update which robots are alive internally.
 				 * Update squadron for newly spawned robot. 
+				 * Update mission for newly spawned robot.
 				 */
 				
 //				TODO: UPDATE SQUADRON NUMBERS LATER
+//				Currently all squad 1, attackers
 				rc.broadcast(39300 + rc.readBroadcast(0), 1);
+				rc.broadcast(39400 + rc.readBroadcast(0), 1);
 				updateLiveRobots();
 				numberOfRobots++;
 				return;
