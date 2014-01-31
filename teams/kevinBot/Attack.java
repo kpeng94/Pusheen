@@ -7,9 +7,8 @@ import battlecode.common.*;
 public class Attack {
 	private static final Direction[] directions = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, 
 												   Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
-	private static final int[] offsetsX = {0, 1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -5, -5, -5, -5, -5, -5, -5, -4, -3, -2, -1};
-	private static final int[] offsetsY = {-5, -5, -5, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -5, -5, -5};
 	private static Robot[] closeEnemies;
+	private static Robot[] detectableEnemies;
 	private static RobotController rc;
 	private static MapLocation myHQLocation;
 	private static MapLocation enemyHQLocation;
@@ -22,6 +21,11 @@ public class Attack {
 	private static int id;
 	private static int offTarget = 14;
 	private static boolean retreatMode = false;
+	private static int numberOfUnitsWeHave;
+	private static int numberOfUnitsTheyHave;
+	private static double healthLastRound = 100;
+	private static double healthThisRound = 100;
+	
 	/**
 	 * INITIALIZATION
 	 */
@@ -55,7 +59,6 @@ public class Attack {
 	 * 130 turns: heal 50 health.
 	 * 
 	 */
-	
 	
 	/**
 	 * Need to consider when there are walls in the way, etc.
@@ -102,8 +105,34 @@ public class Attack {
 		return rc.readBroadcast(27000 + locNum) != 0;
 	}
 	
-	private static boolean isInBounds(MapLocation ml) {
-		return (ml.x < rc.getMapWidth() && ml.x >= 0 && ml.y < rc.getMapHeight() && ml.y >= 0);
+	public static void attackMicro() throws GameActionException {
+		storeEnemiesWithinRange();
+		// TODO: Make HQ actually produce this 
+		numberOfUnitsWeHave = rc.readBroadcast(37000);
+		numberOfUnitsTheyHave = rc.readBroadcast(37001);
+		healthLastRound = healthThisRound;
+		healthThisRound = rc.getHealth();
+
+		// Let teammates know you are being hurt
+		if (healthThisRound < healthLastRound) {
+			// Let teammates know that you are being attacked by a bot
+			rc.broadcast(39600 + id, 1);
+			// We know we've been suicided on because the difference in health is not 0
+			// TODO: We should account for some error here 
+			if ((healthLastRound - healthThisRound) % 10 != 0) {
+				rc.broadcast(39500 + id, 1);
+			}
+		}
+		
+		// Predict what your teammates are going to do and calculate and move as a result (if we can)
+		if (healthThisRound <= 20) {
+			goHeal();
+		}
+	}
+
+	
+	public static void goHeal() {
+		Navigation.setDest(myHQLocation);
 	}
 	
 	/**
@@ -147,6 +176,28 @@ public class Attack {
 		return false;
 	}
 
+	private void decideFightingMechanic() {
+		if (numberOfUnitsWeHave - numberOfUnitsTheyHave >= 5 && numberOfUnitsWeHave >= numberOfUnitsTheyHave * 2) {
+			attackAndRetreat();
+		} else if (numberOfUnitsWeHave - numberOfUnitsTheyHave <= -2) {
+			justRetreat();
+		} else {
+			suicideAttackAndRetreat();
+		}
+	}
+	
+	private void attackAndRetreat() {
+		
+	}
+	
+	private void justRetreat() {
+		
+	}
+	
+	private void suicideAttackAndRetreat() {
+		
+	}
+	
 	private void suicide() {
 		double myHealth = rc.getHealth();
 //		Navigation.setDest(destination);
@@ -164,7 +215,10 @@ public class Attack {
 		if (closeEnemies.length <= 1) {
 			return false;
 		}
-		double myHealth = rc.getHealth();
+//		} else if (myUnitsNumber >= theirUnitsNumber) {
+//			return true;
+//		}
+//		double myHealth = rc.getHealth();
 		return false;
 	}
 	
@@ -187,8 +241,9 @@ public class Attack {
 	 * Should be done every turn to update the nearby enemies that can attack us.
 	 * Bytecode cost: 100
 	 */
-	private void storeEnemiesWithinRange() {
+	private static void storeEnemiesWithinRange() {
 		closeEnemies = rc.senseNearbyGameObjects(Robot.class, 10, rc.getTeam().opponent());
+		detectableEnemies = rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
 	}
 	
 	private int decideAction() {

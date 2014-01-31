@@ -9,23 +9,6 @@ import battlecode.common.*;
  * Delegating squadrons (SUPER IMPORTANT if we want to WIN)
  * 
  * Broadcast system:
- * 
- * 30000 - 39999: Logistic Information 
- * 
- * 30000: How many robots we have (controlled by the HQ)
- * 30001 - 30003: Assuming we spawn at most 90 robots, we can encode the ids of all robots alive in these 3 numbers.
- * 		Description: For robots 1 to 30, the HQ will sense if they are alive or not, then sum (1 or 0) * 2^robot_id 
- * 					 and store that as an integer in channel 30001.
- * 					 The HQ will do similarly for 31 - 60 (channel 30002) and 61 - 90 (channel 30003).
- * 30004 - 30010: What the HQ will consider to be "safe" locations.
- * 					
- * 39700 - 39799: Robots think that they're about to get suicided on.
- * 39800 - 39899: Robot types
- * 39900 - 39999: Round number broadcast by our robots
- * 
- * 
- * 40000 - 40100: Target points around an enemy PASTR that our bots have already focused.
- * 
  * 20000 - 29999: Locations
  *
  * 20000 - 20099: Locations that are good for building PASTRs based on order
@@ -39,6 +22,28 @@ import battlecode.common.*;
  * 26000 - 260xx: surround locations
  * 27000 - 270xx: whether the surround locations are occupied
  * 28000 - 280xx: whether the surround locations are claimed?
+ * 
+ * 30000 - 39999: Logistic Information 
+ * 
+ * 30000: How many robots we have (controlled by the HQ)
+ * 30001 - 30003: Assuming we spawn at most 90 robots, we can encode the ids of all robots alive in these 3 numbers.
+ * 		Description: For robots 1 to 30, the HQ will sense if they are alive or not, then sum (1 or 0) * 2^robot_id 
+ * 					 and store that as an integer in channel 30001.
+ * 					 The HQ will do similarly for 31 - 60 (channel 30002) and 61 - 90 (channel 30003).
+ * 30004 - 30010: What the HQ will consider to be "safe" locations.
+ * 
+ * 
+ * 35000: Leader of the swarm
+ * 
+ * 39500 - 39599: Robots know they have already been suicided on.
+ * 39600 - 39699: Robots know they're being attacked.					
+ * 39700 - 39799: Robots think that they're about to get suicided on.
+ * 39800 - 39899: Robot types
+ * 39900 - 39999: Round number broadcast by our robots
+ * 
+ * 
+ * 40000 - 40100: Target points around an enemy PASTR that our bots have already focused.
+ * 
  */
 
 public class HQHandler extends UnitHandler {
