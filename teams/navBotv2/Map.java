@@ -1,4 +1,4 @@
-package mapBot;
+package navBotv2;
 
 import battlecode.common.*;
 

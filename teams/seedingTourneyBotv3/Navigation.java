@@ -1,11 +1,11 @@
-package mapBot;
+package seedingTourneyBotv3;
 
 import battlecode.common.*;
 
 public class Navigation {
 	static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
-	static final int[] reversedAll = new int[] {4, 5, 3, 6, 2, 7, 1, 0};
-	static final int[] reversedForward = new int[] {7, 1, 0};
+	static final int[] reversedAll = new int[] {4, -3, 3, -2, 2, -1, 1, 0};
+	static final int[] reversedForward = new int[] {-1, 1, 0};
 	static final int checkDist = 4;
 	
 	public static int[] intdirs;
@@ -15,8 +15,6 @@ public class Navigation {
 	public static MapLocation ourHQ;
 	public static MapLocation enemyHQ;
 
-	public static boolean nearHQ; // Destination is near the enemy HQ
-	
 	public static boolean mapDone; // Able to use complex movement with HQ map
 
 	public static boolean pathDone; // Path generation complete
@@ -32,11 +30,11 @@ public class Navigation {
 	public static boolean isRoad;
 	
 	/* Initializes navigation to know the width and height */
-	public static void init(RobotController rcin) throws GameActionException {
+	public static void init(RobotController rcin) {
 		init(rcin, null, 1);
 	}
 	
-	public static void init(RobotController rcin, MapLocation defaultLoc, int radius) throws GameActionException {
+	public static void init(RobotController rcin, MapLocation defaultLoc, int radius) {
 		mapDone = false;
 		rc = rcin;
 		width = rc.getMapWidth();
@@ -55,41 +53,20 @@ public class Navigation {
 	}
 	
 	/* Sets the destination */
-	public static void setDest(MapLocation destination) throws GameActionException {
+	public static void setDest(MapLocation destination) {
 		setDest(destination, 1);
 	}
 	
-	public static void setDest(MapLocation destination, int rad) throws GameActionException {
-		destination = getNearestOpenDest(destination);
+	public static void setDest(MapLocation destination, int rad) {
 		if (dest == null || (dest.x != destination.x && dest.y != destination.y)) {
 			pathDone = false;
 			dest = destination;
 			mapinfo = new int[width * height];
 			curCheck = rc.getLocation();
 			checkNum = 0;
-			isRoad = Map.getTile(curCheck) == 2;
-			if (dest.distanceSquaredTo(enemyHQ) <= 25) {
-				nearHQ = true;
-			}
+			isRoad = rc.senseTerrainTile(curCheck) == TerrainTile.ROAD;
 		}
 		radius = rad;
-	}
-	
-	/* Returns nearest movable square */
-	private static MapLocation getNearestOpenDest(MapLocation destination) throws GameActionException {
-		MapLocation newDest = destination;
-		int tile = Map.getTile(newDest);
-		int rad = 1;
-		int offset = 7;
-		while (tile == 3 || tile == 4) {
-			newDest = destination.add(dir[offset], rad);
-			tile = Map.getTile(newDest);
-			if (offset-- <= 0) {
-				offset = 7;
-				rad++;
-			}
-		}
-		return newDest;
 	}
 	
 	/* Attempts to move to within a radius around destination */
@@ -104,15 +81,11 @@ public class Navigation {
 	
 	/* Trivial movement */
 	public static void trivialMove(MapLocation mapLoc, int[] looks) throws GameActionException {
-		trivialMove(mapLoc, looks, false);
-	}
-	
-	public static void trivialMove(MapLocation mapLoc, int[] looks, boolean tryDanger) throws GameActionException {
 		MapLocation curLoc = rc.getLocation();
 		int toDest = curLoc.directionTo(mapLoc).ordinal();
 		for (int i = looks.length; i-- > 0;) {
-			Direction moveDir = dir[(toDest + looks[i]) % 8];
-			if (rc.canMove(moveDir) && (tryDanger || Map.getTile(curLoc.add(moveDir)) != 5)) {
+			Direction moveDir = dir[(toDest + looks[i] + 8) % 8];
+			if (rc.canMove(moveDir) && curLoc.add(moveDir).distanceSquaredTo(enemyHQ) > 25) {
 				rc.move(moveDir);
 				return;
 			}
@@ -139,7 +112,7 @@ public class Navigation {
 	}
 	
 	/* Calculates paths during idle time */
-	public static void calculate() throws GameActionException {
+	public static void calculate() {
 		if (mapDone) {
 			complexCalculate();
 		}
@@ -148,11 +121,11 @@ public class Navigation {
 		}
 	}
 	
-	public static void simpleCalculate() throws GameActionException {
+	public static void simpleCalculate() {
 		simpleCalculate(2500);
 	}
 	
-	public static void simpleCalculate(int bytelimit) throws GameActionException {
+	public static void simpleCalculate(int bytelimit) {
 		while (Clock.getBytecodesLeft() > bytelimit) {
 			if (curCheck.distanceSquaredTo(dest) <= radius) {
 				return;
@@ -164,25 +137,20 @@ public class Navigation {
 			boolean minRoad = false;
 			
 			for (int i = 8; i-- > 0;) {
-				MapLocation next = curCheck.add(dir[(toDest + reversedAll[i]) % 8]);
+				MapLocation next = curCheck.add(dir[(toDest + reversedAll[i] + 8) % 8]);
 				int intloc = toInt(next);
 				if (intloc < 0 || intloc > width * height) {
 					continue;
 				}
 				int roundNum = (mapinfo[intloc] % 90000) / 9;
-				int tile = Map.getTile(next);
-				
-				if (nearHQ && (tile == 3 || tile == 4)) {
+				TerrainTile tile = rc.senseTerrainTile(next);
+				if (!isValid(next, tile)) {
 					continue;
 				}
-				if (!nearHQ && tile > 2) {
-					continue;
-				}
-				
 				if (roundNum == 0) {
 					updateAdjacent(toInt(curCheck), isRoad ? 1 : 2);
 					curCheck = next;
-					isRoad = tile == 2;
+					isRoad = tile == TerrainTile.ROAD;
 					mapinfo[toInt(curCheck)] += checkNum * 9;
 					checkNum++;
 					break;
@@ -191,7 +159,7 @@ public class Navigation {
 					if (roundNum < minRound) {
 						minRound = roundNum;
 						minNext = next;
-						minRoad = tile == 2;
+						minRoad = tile == TerrainTile.ROAD;
 					}
 				}
 			}
@@ -238,7 +206,14 @@ public class Navigation {
 		}
 		
 		pathMove();
-
+		
+//		Direction moveDir = dir[(backDir + 4) % 8];
+//		
+//		if (rc.canMove(moveDir)) {
+//			mapinfo[start] = 90000 + (checkNum * 9) + (backDir + 4) % 8 + 1;
+//			checkNum++;
+//			rc.move(moveDir);
+//		}
 	}
 	
 	private static void pathMove() throws GameActionException {
@@ -247,6 +222,13 @@ public class Navigation {
 		if (rc.getLocation().distanceSquaredTo(pos) < checkDist + 1) {
 			curPathPos--;
 		}
+	}
+	
+	private static boolean isValid(MapLocation loc, TerrainTile tile) {
+		if ((loc.x == ourHQ.x) && (loc.y == ourHQ.y)) {
+			return false;
+		}
+		return tile == TerrainTile.NORMAL || tile == TerrainTile.ROAD;
 	}
 	
 	public static void complexCalculate() {
