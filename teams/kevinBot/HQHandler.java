@@ -203,7 +203,7 @@ public class HQHandler extends UnitHandler {
 	 * Rough bytecode cost:
 	 */
 	private void updateLiveRobots() throws GameActionException {
-		if (Clock.getRoundNum() % 10 == 0) {
+		if (Clock.getRoundNum() % 10 == 0 && Clock.getRoundNum() > 0) {
 			int firstSet = 0;
 			int secondSet = 0;
 			int thirdSet = 0;
@@ -217,6 +217,10 @@ public class HQHandler extends UnitHandler {
 					firstSet++;
 					robotsAlive[aliveCount] = i;
 					aliveCount++;
+				} else if (bc > 0) {
+					// Robot has died. Get Squadron number
+					int sqnum = rc.readBroadcast(39300 + i);
+					rc.broadcast(35020 + sqnum, (rc.readBroadcast(35020 + sqnum)) - 1);
 				}
 			}
 			rc.broadcast(30001, firstSet);		
