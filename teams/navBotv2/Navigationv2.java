@@ -140,7 +140,6 @@ public class Navigationv2 {
 			int cur = beamList[beamStart] - 1;
 			if (dest.x == cur / height && dest.y == cur % height) {
 				backTrace();
-				printMap();
 				pathDone = true;
 				return;
 			}
@@ -194,16 +193,6 @@ public class Navigationv2 {
 	
 	public static int toInt(int x, int y) {
 		return x * height + y;
-	}
-	
-	private static void printMap() {
-		for (int i = 0; i < width; i++) {
-			String s = "";
-			for (int j = 0; j < height; j++) {
-				s += " " + mapInfo[toInt(j,i)] / 8;
-			}
-			System.out.println("Row " + i + ":" + s);
-		}
 	}
 	
 }
