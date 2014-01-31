@@ -17,8 +17,9 @@ public class Attack {
 	private static MapLocation mySurroundDestination;
 	private static MapLocation myLocation;
 	private static MapLocation newLocation;
-	private static int defaultOff = 31;
+	private static int defaultOff = 14;
 	private static int id;
+	private static int offTarget = 14;
 	
 	/**
 	 * INITIALIZATION
@@ -32,7 +33,6 @@ public class Attack {
 		rc = rcin;
 		id = robotID;
 		enemyHQLocation = rc.senseEnemyHQLocation();
-		mySurroundDestination = enemyHQLocation.add(offsetsX[defaultOff], offsetsY[defaultOff]);
 	}
 	
 	
@@ -66,54 +66,38 @@ public class Attack {
 	 * @throws GameActionException 
 	 */
 	public static boolean surround(boolean clockwise) throws GameActionException {
+		int off = defaultOff;
 		myLocation = rc.getLocation();
-		
-		while (!isInBounds(mySurroundDestination)) {
-			defaultOff--;
-			mySurroundDestination = enemyHQLocation.add(offsetsX[defaultOff], offsetsY[defaultOff]);
+		if (mySurroundDestination == null) {
+			int mlin2 = rc.readBroadcast(26014);
+			mySurroundDestination = new MapLocation(mlin2 / 100, mlin2 % 100);			
 		}
 		if (myLocation.x != mySurroundDestination.x || myLocation.y != mySurroundDestination.y) {
-			int distanceToHQ = myLocation.distanceSquaredTo(enemyHQLocation);
 			int distanceToDest = myLocation.distanceSquaredTo(mySurroundDestination);
-			if (distanceToDest > 36 && !surround) {
+			if (!surround && distanceToDest > 36) {
 				Navigation.setDest(mySurroundDestination, 25);
 				surround = true;
-			} else if (distanceToDest <= 36) {
-				int off = defaultOff;
-				if (isOccupied(mySurroundDestination) || !isInBounds(mySurroundDestination)) {
-					while ((isOccupied(mySurroundDestination) || !isInBounds(mySurroundDestination)) && off >= 0) {
-						newLocation = enemyHQLocation.add(offsetsX[off], offsetsY[off]);
-						if (isInBounds(newLocation)) {
-							mySurroundDestination = newLocation;
-						}
-						off--;
-					}					
-					rc.setIndicatorString(0, "" + mySurroundDestination);
-					Navigation.setDest(mySurroundDestination);
-				}
+			} 
+			if (isOccupied(off)) {
+				rc.setIndicatorString(2, "2: " + rc.readBroadcast(26014) + " huh " + rc.readBroadcast(26013) + " next: " + rc.readBroadcast(26012));
+				while (off >= 0 && isOccupied(off)) {
+					off--;
+					int mlint = rc.readBroadcast(26000 + off);
+					mySurroundDestination = new MapLocation(mlint / 100, mlint % 100);
+				}					
+				rc.setIndicatorString(0, "0: " + mySurroundDestination + " what the L: " + off + " wow: " + isOccupied(off));
+				Navigation.setDest(mySurroundDestination);
+				offTarget = off;
 			}
 			return false;
 		}
 		rc.setIndicatorString(1, "1: I am at the point now.");
+		rc.broadcast(27000 + offTarget, id);
 		return true;
 	}
 	
-	private static boolean isOccupied(MapLocation ml) throws GameActionException {
-		if (ml.x == myLocation.x && ml.y == myLocation.y) {
-			return false;
-		}
-		if (rc.canSenseSquare(ml)) {
-			GameObject go = rc.senseObjectAtLocation(ml);
-			if (go != null) {
-				return true;
-			} else {
-				TerrainTile tt = rc.senseTerrainTile(ml);
-				if (tt == TerrainTile.OFF_MAP || tt == TerrainTile.VOID) {
-					return true;
-				}
-			}			
-		}
-		return false;
+	private static boolean isOccupied(int locNum) throws GameActionException {
+		return rc.readBroadcast(27000 + locNum) != 0;
 	}
 	
 	private static boolean isInBounds(MapLocation ml) {
@@ -224,7 +208,7 @@ public class Attack {
 	 * Consider: communication for micro in terms of which squares are getting attacked
 	 */
 	private static void aimForCows() {
-		if (closestEnemyPASTR)
+//		if (closestEnemyPASTR)
 		
 	}
 }

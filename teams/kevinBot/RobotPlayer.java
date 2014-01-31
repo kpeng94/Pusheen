@@ -6,7 +6,7 @@ public class RobotPlayer {
 	static UnitHandler unit;
 	
 	/* Main Method */
-	public static void run(RobotController rc) {
+	public static void run(RobotController rc) throws GameActionException {
 		switch(rc.getType()) {
 		case HQ:
 			unit = new HQHandler(rc);

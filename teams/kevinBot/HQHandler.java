@@ -18,7 +18,6 @@ import battlecode.common.*;
  * 					 and store that as an integer in channel 30001.
  * 					 The HQ will do similarly for 31 - 60 (channel 30002) and 61 - 90 (channel 30003).
  * 30004 - 30010: What the HQ will consider to be "safe" locations.
- * 
  * 					
  * 39700 - 39799: Robots think that they're about to get suicided on.
  * 39800 - 39899: Robot types
@@ -35,6 +34,11 @@ import battlecode.common.*;
  *
  *
  * 24900 - 24999: Where our robots are located (24900 + robot_id as offset)
+ * 
+ * 25999: length of surround locations
+ * 26000 - 260xx: surround locations
+ * 27000 - 270xx: whether the surround locations are occupied
+ * 28000 - 280xx: whether the surround locations are claimed?
  */
 
 public class HQHandler extends UnitHandler {
@@ -70,12 +74,13 @@ public class HQHandler extends UnitHandler {
 	int numberOfRobots = 0;
 	int numberOfNoiseTowers = 0;
 
-	public HQHandler(RobotController rcin) {
+	public HQHandler(RobotController rcin) throws GameActionException {
 		super(rcin);
 		myHQLoc = rc.senseHQLocation();
 		enemyHQLoc = rc.senseEnemyHQLocation();
 		getSpawn();
 		CowMap.init(rc);
+		calculateSurround();
 	}
 
 	/* Generates spawn list order */
@@ -226,56 +231,76 @@ public class HQHandler extends UnitHandler {
 	/**
 	 * Calculates the important positions that need to be surrounded if we're using a surround strategy.
 	 */
-	private void calculateSurround() {
+	private void calculateSurround() throws GameActionException {
 		boolean ignoreLeft = enemyHQLoc.x <= 10;
 		boolean ignoreRight = rc.getMapWidth() - enemyHQLoc.x <= 10;
 		boolean ignoreTop = enemyHQLoc.y <= 10;
 		boolean ignoreBottom = rc.getMapWidth() - enemyHQLoc.y <= 10;
-		int ignoreCount = 0;
-		if (ignoreLeft)
-			ignoreCount++;
-		ignoreCount <<= 1;
-		if (ignoreRight)
-			ignoreCount++;
-		ignoreCount <<= 1;
-		if (ignoreTop)
-			ignoreCount++;
-		ignoreCount <<= 1;
-		if (ignoreBottom)
-			ignoreCount++;
-		/**
-		 * 1111
-		 * ignore bits: left, right, top, bottom
-		 */
-		switch (ignoreCount) {
-			case 0:
-				
-				break;
-			case 1:
-				break;
-			case 2:
-				break;
-			case 4:
-				break;
-			case 8:
-				break;
-			//ignore right bottom
-			case 5:
-				break;
-			//ignore left top
-			case 10:
-				break;
-			//ignore right top
-			case 6:
-				break;
-			//ignore left bottom
-			case 9:
-				break;
-			//ignore all
-			default:
-				break;
-		}
+		int count = 0;
+		broadcastSurroundLocations(!ignoreTop, !ignoreRight, !ignoreBottom, !ignoreLeft, true);
 	}
+	
+	private void broadcastSurroundLocations(boolean top, boolean right, boolean bottom, boolean left, 
+											boolean clockwise) throws GameActionException {
+		int count = 0;
+		if (clockwise) {
+			if (top) {
+				if (right) {
+					for (int os = 8; os-- > 0; ) {
+						if (count >= 15) {
+							break;
+						}
+						MapLocation ml = enemyHQLoc.add(ostrX[os], ostrY[os]);
+						if (rc.senseTerrainTile(ml) != TerrainTile.VOID) {
+							rc.broadcast(26000 + count, ml.x * 100 + ml.y);
+							rc.setIndicatorString(0, "I HAVE BROACASTED THIS");
+							count++;
+						}
+					}
+				}
+				if (left) {
+					for (int os = 8; os-- > 0; ) {
+						if (count >= 15) {
+							break;
+						}
+						MapLocation ml = enemyHQLoc.add(ostlX[os], ostlY[os]);
+						if (rc.senseTerrainTile(ml) != TerrainTile.VOID) {
+							rc.broadcast(26000 + count, ml.x * 100 + ml.y);
+							count++;
+						}
+					}
+				}
+			}
+			if (bottom) {
+				if (left) {
+					for (int os = 8; os-- > 0; ) {
+						if (count >= 15) {
+							break;
+						}
+						MapLocation ml = enemyHQLoc.add(osblX[os], osblY[os]);
+						if (rc.senseTerrainTile(ml) != TerrainTile.VOID) {
+							rc.broadcast(26000 + count, ml.x * 100 + ml.y);
+							count++;
+						}
+					}
+				}
+				if (right) {				
+					for (int os = 8; os-- > 0; ) {
+						if (count >= 15) {
+							break;
+						}
+						MapLocation ml = enemyHQLoc.add(osbrX[os], osbrY[os]);
+						if (rc.senseTerrainTile(ml) != TerrainTile.VOID) {
+							rc.broadcast(26000 + count, ml.x * 100 + ml.y);
+							count++;
+						}
+					}
+				}
+			}
+		} else {
+			
+		}
+	} 
 }
 
 

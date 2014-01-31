@@ -20,7 +20,7 @@ public class SoldierHandler extends UnitHandler {
 		closeToMe = new MapLocation((myHQLocation.x + enemyHQLocation.x) / 2, 
 													 (myHQLocation.y + enemyHQLocation.y) / 2);
 		Navigation.init(rc, closeToMe, 25);
-		Attack.init(rc);
+		Attack.init(rc, id);
 	}
 
 	@Override
