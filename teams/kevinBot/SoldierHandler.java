@@ -36,6 +36,7 @@ public class SoldierHandler extends UnitHandler {
 		}
 				
 		if (rc.isActive()) {
+			tryAttack();			
 			tryMove();					
 		}
 		
@@ -44,15 +45,16 @@ public class SoldierHandler extends UnitHandler {
 	
 	/* Attempts to attack */
 	private void tryAttack() throws GameActionException {
+		Attack.attackMicro();
 	}
 	
 	/* Attempts to move */
 	private void tryMove() throws GameActionException {
-		boolean retreat = Attack.retreat(false, false);
-		boolean surrounded = Attack.surround(true);
-		if (!surrounded && !retreat) {
+
+//		boolean surrounded = Attack.surround(true);
+//		if (!surrounded && !retreat) {
 			Navigation.swarmMove();
-		}
+//		}
 	}
 	
 	/* Does calculations */

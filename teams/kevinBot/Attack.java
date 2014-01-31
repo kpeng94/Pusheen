@@ -32,6 +32,7 @@ public class Attack {
 	private static int goal = 0;
 	private static int numberOfNTs = 0;
 	private static int numberOfPASTRs = 0;
+	private static boolean healing = false;
 	
 	/**
 	 * INITIALIZATION
@@ -122,12 +123,14 @@ public class Attack {
 		storeEnemiesWithinRange();
 		// TODO: Make HQ actually produce this 
 		myLocation = rc.getLocation();
-		numberOfUnitsWeHave = rc.readBroadcast(37000);
+		squadronNumber = rc.readBroadcast(39300 + id);
+		numberOfUnitsWeHave = rc.readBroadcast(35020 + squadronNumber);
 		numberOfUnitsTheyHave = rc.readBroadcast(37001);
 		healthLastRound = healthThisRound;
 		healthThisRound = rc.getHealth();
 		numberOfPASTRs = rc.readBroadcast(31000);
 		numberOfNTs = rc.readBroadcast(31001);
+//		Add squadronLeader boolean (true / false)
 		goal = rc.readBroadcast(39400 + id);
 		// Let teammates know you are being hurt
 		if (healthThisRound < healthLastRound) {
@@ -144,8 +147,9 @@ public class Attack {
 		
 		if (goal == 1) {
 			// mostly attack and retreat micro here
+			decideFightingMechanic();
 		} else if (goal == 2) {
-			
+			// mostly attack, no retreat
 		} else if (goal == 3) {
 			
 		}
@@ -154,6 +158,7 @@ public class Attack {
 
 		if (healthThisRound <= 20) {
 			goHeal();
+			healing = true;
 		}
 	}
 
@@ -164,6 +169,8 @@ public class Attack {
 	public static Direction highPDir() {
 		return Direction.NONE;
 	}
+	
+	public static 
 	
 	public static MapLocation findClosestEnemyLoc(Robot[] eInRange, boolean detect) throws GameActionException {
 		MapLocation closestML = null;
@@ -253,7 +260,7 @@ public class Attack {
 	/**
 	 * For attacking mode
 	 */
-	private void decideFightingMechanic() throws GameActionException {
+	private static void decideFightingMechanic() throws GameActionException {
 		if (numberOfUnitsWeHave - numberOfUnitsTheyHave >= 5 && numberOfUnitsWeHave >= numberOfUnitsTheyHave * 2) {
 			attackAndRetreat();
 		} else if (numberOfUnitsWeHave - numberOfUnitsTheyHave <= -2) {
@@ -267,7 +274,7 @@ public class Attack {
 	 * Attack and run away as necessary.
 	 * @throws GameActionException
 	 */
-	private void attackAndRetreat() throws GameActionException {
+	private static void attackAndRetreat() throws GameActionException {
 		if (reallyCloseEnemies.length >= 1) {
 			MapLocation ml = findClosestEnemyLoc(reallyCloseEnemies, false);
 			Direction dte = myLocation.directionTo(ml);
@@ -286,7 +293,7 @@ public class Attack {
 		}
 	}
 	
-	private void justRetreat() throws GameActionException {
+	private static void justRetreat() throws GameActionException {
 		if (reallyCloseEnemies.length >= 1) {
 			MapLocation ml = findClosestEnemyLoc(reallyCloseEnemies, false);
 			Direction dte = myLocation.directionTo(ml);
@@ -298,7 +305,7 @@ public class Attack {
 		}
 	}
 	
-	private void suicideAttackAndRetreat() throws GameActionException {
+	private static void suicideAttackAndRetreat() throws GameActionException {
 		if (shouldSuicide()) {
 			if (canSuicide()) {
 				rc.selfDestruct();
@@ -330,7 +337,7 @@ public class Attack {
 		return null;
 	}
 	
-	private boolean shouldSuicide() {
+	private static boolean shouldSuicide() {
 		if (closeEnemies.length <= 1) {
 			return false;
 		}
