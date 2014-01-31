@@ -48,8 +48,9 @@ public class SoldierHandler extends UnitHandler {
 	
 	/* Attempts to move */
 	private void tryMove() throws GameActionException {
+		boolean retreat = Attack.retreat(false, false);
 		boolean surrounded = Attack.surround(true);
-		if (!surrounded) {
+		if (!surrounded && !retreat) {
 			Navigation.swarmMove();
 		}
 	}
