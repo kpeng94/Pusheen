@@ -32,9 +32,12 @@ import battlecode.common.*;
  * 					 The HQ will do similarly for 31 - 60 (channel 30002) and 61 - 90 (channel 30003).
  * 30004 - 30010: What the HQ will consider to be "safe" locations.
  * 
+ * 31000: # of pastrs
+ * 31001: # of NTs
  * 
  * 35000 - 35009: Squadron leaders
  * 35010 - 35019: Squadron locations roughly
+ * 35020 - 35029: Squadron army size
  * 
  * 
  * 39300 - 39399: Squadron number (for attackers and pastr builders)

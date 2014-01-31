@@ -10,6 +10,7 @@ public class Attack {
 	private static Robot[] reallyCloseEnemies; // Within 5 squared distance
 	private static Robot[] closeEnemies; // Within 10 squared distance
 	private static Robot[] detectableEnemies; // Within 35 squared distance
+	private static MapLocation[] detectableEnemyLocations;
 	private static RobotController rc;
 	private static MapLocation myHQLocation;
 	private static MapLocation enemyHQLocation;
@@ -29,6 +30,8 @@ public class Attack {
 	private static boolean beingAttacked = false;
 	private static boolean beingSDed = false;
 	private static int goal = 0;
+	private static int numberOfNTs = 0;
+	private static int numberOfPASTRs = 0;
 	
 	/**
 	 * INITIALIZATION
@@ -123,6 +126,8 @@ public class Attack {
 		numberOfUnitsTheyHave = rc.readBroadcast(37001);
 		healthLastRound = healthThisRound;
 		healthThisRound = rc.getHealth();
+		numberOfPASTRs = rc.readBroadcast(31000);
+		numberOfNTs = rc.readBroadcast(31001);
 		goal = rc.readBroadcast(39400 + id);
 		// Let teammates know you are being hurt
 		if (healthThisRound < healthLastRound) {
@@ -160,16 +165,32 @@ public class Attack {
 		return Direction.NONE;
 	}
 	
-	public static MapLocation findClosestEnemyLoc(Robot[] eInRange) throws GameActionException {
+	public static MapLocation findClosestEnemyLoc(Robot[] eInRange, boolean detect) throws GameActionException {
 		MapLocation closestML = null;
 		int distance = 100000;
-		for (int i = eInRange.length; i-- > 0;) {
-			RobotInfo ri = rc.senseRobotInfo(eInRange[i]);
-			int nd = myLocation.distanceSquaredTo(ri.location);
-			if (nd < distance) {
-				closestML = ri.location;
-				distance = nd;
+		
+		if (detect) {
+			detectableEnemyLocations = new MapLocation[eInRange.length];
+			for (int i = eInRange.length; i-- > 0;) {
+				RobotInfo ri = rc.senseRobotInfo(eInRange[i]);
+				MapLocation newLoc = ri.location;
+				detectableEnemyLocations[i] = newLoc;
+				int nd = myLocation.distanceSquaredTo(newLoc);
+				if (nd < distance) {
+					closestML = newLoc;
+					distance = nd;
+				}
 			}
+		} else {
+			for (int i = eInRange.length; i-- > 0;) {
+				RobotInfo ri = rc.senseRobotInfo(eInRange[i]);
+				MapLocation newLoc = ri.location;
+				int nd = myLocation.distanceSquaredTo(newLoc);
+				if (nd < distance) {
+					closestML = newLoc;
+					distance = nd;
+				}
+			}			
 		}
 		return closestML;
 	}
@@ -242,28 +263,54 @@ public class Attack {
 	 */
 	private void attackAndRetreat() throws GameActionException {
 		if (reallyCloseEnemies.length >= 1) {
-			MapLocation ml = findClosestEnemyLoc(reallyCloseEnemies);
+			MapLocation ml = findClosestEnemyLoc(reallyCloseEnemies, false);
 			Direction dte = myLocation.directionTo(ml);
 			retreat(false, dte, ml);
 		} else if (closeEnemies.length >= 1) {
-//			MapLocation ml = findClosestEnemyLoc(closeEnemies);
 			MapLocation ml = findLowestHP(closeEnemies);
 			if (rc.isActive() && rc.canAttackSquare(ml)) {
 				rc.attackSquare(ml);
 			}
 		} else {
-			MapLocation ml = findClosestEnemyLoc(detectableEnemies);
+			MapLocation ml = findClosestEnemyLoc(detectableEnemies, true);
+			Direction dir = myLocation.directionTo(ml);
+			if (!inEnemyRange(detectableEnemyLocations, myLocation.add(dir))) {
+				takeStep(dir);
+			}
 		}
 	}
 	
 	private void justRetreat() throws GameActionException {
-		
+		if (reallyCloseEnemies.length >= 1) {
+			MapLocation ml = findClosestEnemyLoc(reallyCloseEnemies, false);
+			Direction dte = myLocation.directionTo(ml);
+			retreat(false, dte, ml);
+		} else if (closeEnemies.length >= 1) {
+			MapLocation ml = findClosestEnemyLoc(closeEnemies, false);
+			Direction dte = myLocation.directionTo(ml);
+			retreat(false, dte, ml);
+		}
 	}
 	
 	private void suicideAttackAndRetreat() throws GameActionException {
+		if (shouldSuicide()) {
+			if (canSuicide()) {
+				rc.selfDestruct();
+			}
+			if (reallyCloseEnemies.length >= 1) {
+				MapLocation ml = findClosestEnemyLoc(reallyCloseEnemies, false);
+				Direction dte = myLocation.directionTo(ml);
+				retreat(false, dte, ml);
+			} else if (closeEnemies.length >= 1) {
+				MapLocation ml = findClosestEnemyLoc(closeEnemies, false);
+			}			
+		}
 		
 	}
-	
+
+	private static boolean canSuicide() {
+		return false;
+	}
 	private void suicide() {
 		double myHealth = rc.getHealth();
 //		Navigation.setDest(destination);
