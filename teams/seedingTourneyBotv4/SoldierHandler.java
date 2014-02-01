@@ -76,7 +76,13 @@ public class SoldierHandler extends UnitHandler {
 		// There is a location for the PASTR we want to build.
 		
 		if (rc.isActive()) {
-			if (shouldAttack()) {
+			if (shouldRetreat()){
+				Robot[] nearbyEnemies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
+				MapLocation closestEnemy=closestTarget(nearbyEnemies);
+				Direction enemyDir=rc.getLocation().directionTo(closestEnemy);
+				
+				retreat(enemyDir,closestEnemy);
+			} else if (shouldAttack()) {
 				tryAttack();
 			} else if (shouldHelp()){
 				goHelp();
@@ -102,6 +108,20 @@ public class SoldierHandler extends UnitHandler {
 		calculate();
 	}
 	
+	private boolean shouldRetreat() throws GameActionException {
+		Robot[] nearbyEnemies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
+		Robot[] nearbyAllies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam());
+		
+		if (nearbyEnemies.length!=0){
+			MapLocation closestEnemy=closestTarget(nearbyEnemies);
+
+			if (nearbyAllies.length<nearbyEnemies.length || rc.getLocation().distanceSquaredTo(closestEnemy)<=8){
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private void goBackToYourRole() throws GameActionException {
 		if (bumRushing) {
 			if (enemyPASTRs.length >= 1) {
@@ -360,11 +380,12 @@ public class SoldierHandler extends UnitHandler {
 	private void tryMove() throws GameActionException {
 		Robot[] nearbyEnemies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
 		Robot[] nearbyAllies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam());
+		
 		if (nearbyEnemies.length==0){
 			Navigation.move();
 		} else if (nearbyAllies.length>nearbyEnemies.length){
 			Navigation.move(); 
-		}
+		} 
 	}
 	
 	/* Does calculations */
@@ -544,8 +565,7 @@ public class SoldierHandler extends UnitHandler {
 	 * @return
 	 * @throws GameActionException
 	 */
-	public boolean retreat(boolean groupEscape, 
-								  Direction enemyDir, MapLocation ml) throws GameActionException {
+	public boolean retreat(Direction enemyDir, MapLocation ml) throws GameActionException {
 		Direction oppositeDir = dir[(enemyDir.ordinal() + 6) % 8];
 		int maxDistance = rc.getLocation().distanceSquaredTo(ml);
 		for (int i = 4; i-- > 0;) {
