@@ -85,7 +85,11 @@ public class Navigation {
 			}
 			rc.setIndicatorString(0, "" + localNext);
 			rc.setIndicatorString(1, "" +mapInfo[localNext.x][localNext.y]);
-			localNext = localNext.add(dir[(mapInfo[localNext.x][localNext.y] % 10) - 1]);
+			int mapDir = mapInfo[localNext.x][localNext.y] % 10;
+			if (mapDir == 0) {
+				break;
+			}
+			localNext = localNext.add(dir[mapDir - 1]);
 		}
 		trivialMove(localNext, reversedForward);
 	}
@@ -114,7 +118,7 @@ public class Navigation {
 			return;
 		}
 		while (Clock.getBytecodesLeft() > bytelimit) {
-			System.out.println(cur);
+//			System.out.println(cur);
 			if (cur.x == dest.x && cur.y == dest.y) {
 				done = true;
 				return;
@@ -132,7 +136,7 @@ public class Navigation {
 				}
 			}
 			else {
-				if (cur.x == startBuffer.x && cur.y == startBuffer.y) {
+				if (startBuffer.distanceSquaredTo(cur) <= 1 && cur.x != buffer[0].x && cur.y != buffer[0].y) {
 					tracing = false;
 					int minDist = startBuffer.distanceSquaredTo(dest);
 					MapLocation minLoc = startBuffer;
@@ -144,6 +148,7 @@ public class Navigation {
 					for (int i = end; i-- > 0;) {
 						int newDist = buffer[i].distanceSquaredTo(dest);
 						if (newDist < minDist) {
+							System.out.println(buffer[i] + " " + newDist);
 							minDist = newDist;
 							minLoc = buffer[i];
 						}
@@ -152,7 +157,7 @@ public class Navigation {
 					continue;
 				}
 				Direction forward = dir[((mapInfo[cur.x][cur.y] / 10) % 10) - 1].opposite().rotateLeft().rotateLeft();
-				for (int i = 6; i-- > 0;) {
+				for (int i = 7; i-- > 0;) {
 					if (checkTile(forward, false)) {
 						break;
 					}
@@ -171,9 +176,7 @@ public class Navigation {
 			int nextInfo = mapInfo[next.x][next.y];
 			int dist = (curInfo / 100) +  1;
 			mapInfo[cur.x][cur.y] = (curInfo / 10) * 10 + toNext.ordinal() + 1;
-			if (nextInfo / 100 == 0 || nextInfo / 100 > dist) {
-				mapInfo[next.x][next.y] = dist * 100 + (toNext.opposite().ordinal() + 1) * 10;
-			}
+			mapInfo[next.x][next.y] = dist * 100 + (toNext.opposite().ordinal() + 1) * 10 + (nextInfo % 10);
 			
 			if (startTrace) {
 				tracing = true;
