@@ -593,8 +593,8 @@ public class SoldierHandler extends UnitHandler {
 	private boolean takeStep(Direction d1, Direction d2, int w1, int w2) throws GameActionException {
 		Direction dir1 = dir[((d1.ordinal() * w1 + d2.ordinal() * w2) / (w1 + w2) + 8) % 8];
 		if (rc.isActive()) {
-			if (rc.canMove(dir)) {
-				rc.move(dir);
+			if (rc.canMove(dir1)) {
+				rc.move(dir1);
 				return true;
 			} 
 			Direction dir2 = dir[(dir1.ordinal() + 1) % 8];
