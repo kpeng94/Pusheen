@@ -59,11 +59,13 @@ def analyzeMatch(log, stats, a, b, maps):
                 win = line[line.index('[java] [server]')+len('[java] [server]'):].strip()
                 if 'wins' in win:
                     won = True
-                    winTeam = win[:win.rindex('(')].strip()
+                    winTeam = win[:win.index('(')].strip()
                     loseTeam = a if winTeam == b else b
-                    winSide = win[win.rindex(')')-1]
+                    winSide = win[win.index(')')-1]
                     loseSide = 'A' if winSide == 'B' else 'B'
     f.close()
+
+    print win
 
     winStats = stats[winTeam]
     winMaps = winStats['maps']
