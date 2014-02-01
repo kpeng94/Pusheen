@@ -409,7 +409,6 @@ public class SoldierHandler extends UnitHandler {
 //		}
 		if (rc.readBroadcast(21000)==id || rc.readBroadcast(21001)==id || rc.readBroadcast(21002)==id 
 				|| rc.readBroadcast(21003)==id || rc.readBroadcast(21004)==id){
-			System.out.println("who");
 			if (rc.readBroadcast(40000+id)==0){
 				if (rc.readBroadcast(15007)==(Clock.getRoundNum()-1) && Clock.getRoundNum()%50==0){
 					if (rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent()).length==0){
