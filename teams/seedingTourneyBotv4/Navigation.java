@@ -45,7 +45,7 @@ public class Navigation {
 	}
 	
 	public static void move() throws GameActionException {
-		if ((Clock.getRoundNum() - startRound > waitTime) && !SimpleNav.pathDone) {
+		if ((Clock.getRoundNum() - startRound > waitTime) && (!SimpleNav.pathDone || SimpleNav.curPathPos > width * height - 5)) {
 			TangentBug.setDest(SimpleNav.dest);
 			failure = true;
 		}
@@ -75,7 +75,7 @@ public class Navigation {
 	}
 	
 	public static void calculate(int bytelimit) throws GameActionException {
-		if ((Clock.getRoundNum() - startRound > waitTime) && !SimpleNav.pathDone) {
+		if ((Clock.getRoundNum() - startRound > waitTime) && (!SimpleNav.pathDone || SimpleNav.curPathPos > width * height - 5)) {
 			TangentBug.setDest(SimpleNav.dest);
 			failure = true;
 		}

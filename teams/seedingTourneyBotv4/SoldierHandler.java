@@ -39,6 +39,8 @@ public class SoldierHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
+		rc.setIndicatorString(0, "" + SimpleNav.dest);
+		rc.setIndicatorString(2, "" + SimpleNav.curPathPos);
 		myLoc = rc.getLocation();
 		checkToFillSpots();
 		
@@ -54,7 +56,7 @@ public class SoldierHandler extends UnitHandler {
 					// If we have reached the destination (which can only be set true by the defendPASTR
 					// method, we don't need to move, we only need to stay put and attack when necessary
 					// for now).
-					defendPASTR();					
+					defendPASTR();
 				}
 			} else if (obj == 3) {
 			
