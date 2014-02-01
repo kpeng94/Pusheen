@@ -128,7 +128,7 @@ public class Navigation {
 				if (!checkTile(toDest, false)) {
 					Direction rotDir = toDest;
 					for (int i = 4; i-- > 0;) {
-						rotDir = rotDir.rotateRight();
+						rotDir = rotDir.rotateLeft();
 						if (checkTile(rotDir, true)) {
 							break;
 						}
@@ -156,12 +156,12 @@ public class Navigation {
 					cur = minLoc;
 					continue;
 				}
-				Direction forward = dir[((mapInfo[cur.x][cur.y] / 10) % 10) - 1].opposite().rotateLeft().rotateLeft();
+				Direction forward = dir[((mapInfo[cur.x][cur.y] / 10) % 10) - 1].opposite().rotateRight().rotateRight();
 				for (int i = 7; i-- > 0;) {
 					if (checkTile(forward, false)) {
 						break;
 					}
-					forward = forward.rotateRight();
+					forward = forward.rotateLeft();
 				}
 			}
 		}
