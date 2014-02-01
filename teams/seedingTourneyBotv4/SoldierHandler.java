@@ -21,6 +21,7 @@ public class SoldierHandler extends UnitHandler {
 	public static Direction myHQtoenemyHQ;
 	public static int myHQtoenemyHQint;
 	public static MapLocation helpLoc;
+	public static MapLocation myLoc;
 	
 	public SoldierHandler(RobotController rcin) throws GameActionException {
 		super(rcin);
@@ -36,11 +37,8 @@ public class SoldierHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
-
+		myLoc = rc.getLocation();
 		checkToFillSpots();
-		
-		
-		rc.setIndicatorString(0, "my id is:"+id);
 		// Navigation for each soldier
 		if (!Navigation.mapDone) {
 			if (rc.readBroadcast(1) == 1)
@@ -107,8 +105,6 @@ public class SoldierHandler extends UnitHandler {
 		calculate();
 	}
 	
-	
-
 	private void goBackToYourRole() throws GameActionException {
 		if (bumRushing) {
 			if (enemyPASTRs.length >= 1) {
@@ -145,14 +141,12 @@ public class SoldierHandler extends UnitHandler {
 
 	private void goHelp() throws GameActionException {
 		Navigation.setDest(targetLocation);	
-		//System.out.println("Going to help"+helpLoc.x+", "+helpLoc.y);
-		//rc.setIndicatorString(0, "going to help"+helpLoc.x+", "+helpLoc.y);
 	}
 
 	private void callForHelp() throws GameActionException {
 		Robot nearestenemy=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent())[0];
 		MapLocation enemyLoc=rc.senseRobotInfo(nearestenemy).location;
-		MapLocation myLoc=rc.getLocation();
+		myLoc = rc.getLocation();
 		MapLocation helpLoc=myLoc.add(myLoc.directionTo(enemyLoc), (int)Math.sqrt(myLoc.distanceSquaredTo(enemyLoc))/2);
 		
 		rc.broadcast(50000, helpLoc.x*100+helpLoc.y);
@@ -220,15 +214,13 @@ public class SoldierHandler extends UnitHandler {
 	
 	private boolean shouldHelp() throws GameActionException {
 		int loc=rc.readBroadcast(50000);
-		if (loc!=0){
+		if (loc!=0) {
 			MapLocation helpLoc=new MapLocation(loc/100,loc%100);
 			if (rc.getLocation().distanceSquaredTo(helpLoc)<=36){
 				targetLocation=helpLoc;
-				rc.setIndicatorString(2, "should Help");
 				return true;
 			}
 		}
-		rc.setIndicatorString(2, "should not help");
 		return false;
 	}
 
@@ -239,11 +231,9 @@ public class SoldierHandler extends UnitHandler {
 				return false;
 			} else {
 				rc.broadcast(51000, nearbyEnemy.length+2);
-				rc.setIndicatorString(1, "call for help");
 				return true;
 			}
 		} 
-		rc.setIndicatorString(1, "not call for help");
 		return false;
 	}
 
@@ -373,7 +363,6 @@ public class SoldierHandler extends UnitHandler {
 	private void tryMove() throws GameActionException {
 		Robot[] nearbyEnemies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
 		Robot[] nearbyAllies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam());
-		rc.setIndicatorString(2, "# of NearbyAllies"+nearbyAllies.length);
 		if (nearbyEnemies.length==0){
 			Navigation.swarmMove();
 		} else if (nearbyAllies.length>nearbyEnemies.length){
@@ -498,32 +487,18 @@ public class SoldierHandler extends UnitHandler {
 	private void checkToFillSpots() throws GameActionException {
 		if (rc.readBroadcast(30000) == id) {
 		    rc.broadcast(15000, Clock.getRoundNum());
-		    //rc.setIndicatorString(0, ""+id);
-		    //rc.setIndicatorString(1, "pastr");		    
     	} else if (rc.readBroadcast(21000) == id) {
     		rc.broadcast(15001, Clock.getRoundNum());
-		    //rc.setIndicatorString(0, ""+id);
-		    //rc.setIndicatorString(1, "defend");		    
 		} else if (rc.readBroadcast(21001) == id) {
 		    rc.broadcast(15002, Clock.getRoundNum());
-		    //rc.setIndicatorString(0, ""+id);
-		    //rc.setIndicatorString(1, "defend");		    
 		} else if (rc.readBroadcast(21002) == id) {
 		    rc.broadcast(15003, Clock.getRoundNum());
-		    //rc.setIndicatorString(0, ""+id);
-		    //rc.setIndicatorString(1, "defend");		    
 		} else if (rc.readBroadcast(21003) == id) {
 		    rc.broadcast(15004, Clock.getRoundNum());
-		    //rc.setIndicatorString(0, ""+id);
-		    //rc.setIndicatorString(1, "defend");		    
 		} else if (rc.readBroadcast(21004) == id) {
 		    rc.broadcast(15005, Clock.getRoundNum());
-		    //rc.setIndicatorString(0, ""+id);
-		    //rc.setIndicatorString(1, "defend");		    
 		} else if (rc.readBroadcast(30001) == id) {
 			rc.broadcast(15006, Clock.getRoundNum());
-		    //rc.setIndicatorString(0, ""+id);
-		    //rc.setIndicatorString(1, "nt");		    
 		}
 	}
 	
@@ -563,4 +538,77 @@ public class SoldierHandler extends UnitHandler {
 			}
 		}
 	}
+
+	/**
+	 * Considerations: running towards points of safety, but also points where we can herd our cows.
+	 * Distracting the enemy from a PASTR.
+	 * 
+	 * Running alone or running as a group?
+	 * Telling the other robots where you will hypothetically go.
+	 * 
+	 * @param considerWalls If we should take into account walls or not
+	 * @param groupEscape
+	 * @param enemyDir
+	 * @param ml Assumed to be the closest enemy (TODO: tweak for multiple closest later)
+	 * @return
+	 * @throws GameActionException
+	 */
+	public boolean retreat(boolean groupEscape, 
+								  Direction enemyDir, MapLocation ml) throws GameActionException {
+		Direction oppositeDir = dir[(enemyDir.ordinal() + 6) % 8];
+		int maxDistance = rc.getLocation().distanceSquaredTo(ml);
+		for (int i = 4; i-- > 0;) {
+			Direction dirAdd = dir[(enemyDir.ordinal() + i + 2) % 8];
+			int newDistance = rc.getLocation().add(dirAdd).distanceSquaredTo(ml);
+			if (newDistance > maxDistance) {
+				oppositeDir = dir[(enemyDir.ordinal() + i + 2) % 8];
+				maxDistance = newDistance;
+			}
+		}
+		Direction toMyHQ = myLoc.directionTo(myHQLocation);
+		int hqCloseness = myLoc.distanceSquaredTo(myHQLocation);
+		return takeStep(oppositeDir, toMyHQ, hqCloseness, 100);
+	}
+
+	/**
+	 * Takes a step in the direction 
+	 *
+	 */
+	private boolean takeStep(Direction dir1) throws GameActionException {
+		if (rc.isActive() && rc.canMove(dir1)) {
+			rc.move(dir1);
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Takes a step in a weighted direction
+	 * @param d1 direction 1
+	 * @param d2 direction 2
+	 * @param w1 weight of d1
+	 * @param w2 weight of d2
+	 * @throws GameActionException
+	 */
+	private boolean takeStep(Direction d1, Direction d2, int w1, int w2) throws GameActionException {
+		Direction dir1 = dir[((d1.ordinal() * w1 + d2.ordinal() * w2) / (w1 + w2) + 8) % 8];
+		if (rc.isActive()) {
+			if (rc.canMove(dir1)) {
+				rc.move(dir1);
+				return true;
+			} 
+			Direction dir2 = dir[(dir1.ordinal() + 1) % 8];
+			if (rc.canMove(dir2)) {
+				rc.move(dir2);
+				return true;
+			} 
+			Direction dir3 = dir[(dir1.ordinal() + 7) % 8];
+			if (rc.canMove(dir3)) {
+				rc.move(dir3);
+				return true;
+			}
+		}
+		return false;
+	}
+	
 }
