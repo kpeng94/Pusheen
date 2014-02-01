@@ -6,10 +6,14 @@ public class NoisetowerHandler extends UnitHandler {
 	static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
 	static int lastNoise;
 	static MapLocation myLoc;
+	static int mapWidth;
+	static int mapHeight;
 	
 	public NoisetowerHandler(RobotController rcin) {
 		super(rcin);
 		myLoc = rc.getLocation();
+		mapWidth = rc.getMapWidth();
+		mapHeight = rc.getMapHeight();
 	}
 
 	@Override
@@ -43,7 +47,7 @@ public class NoisetowerHandler extends UnitHandler {
 //		System.out.println(atk.x+", "+atk.y);
 //		}		
 		
-		if (atk.x>=-3 && atk.y>=-3){
+		if (atk.x>=-2 && atk.y >=-2 && atk.x <= mapWidth + 2 && atk.y <= mapHeight + 2){
 			rc.attackSquare(atk);
 		} else {
 			//System.out.println("recurse");
