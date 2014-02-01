@@ -21,7 +21,7 @@ public class Navigation {
 	public static boolean pathDone; // Path generation complete
 	public static MapLocation dest; // Destination location
 	public static int radius; // Radius to swarm around destination
-	public static int[][] mapinfo; // Explored map info
+	public static int[][] mapInfo; // Explored map info
 	
 	public static MapLocation[] path;
 	public static int curPathPos;
@@ -62,7 +62,7 @@ public class Navigation {
 		if (dest == null || (dest.x != destination.x && dest.y != destination.y)) {
 			pathDone = false;
 			dest = destination;
-			mapinfo = new int[width][height];
+			mapInfo = new int[width][height];
 			curCheck = rc.getLocation();
 			checkNum = 0;
 			isRoad = Map.getTile(curCheck) == 2;
@@ -166,7 +166,7 @@ public class Navigation {
 				if (next.x < 0 || next.y < 0 || next.x >= width || next.y >= height) {
 					continue;
 				}
-				int roundNum = (mapinfo[next.x][next.y] % 90000) / 9;
+				int roundNum = (mapInfo[next.x][next.y] % 90000) / 9;
 				int tile = Map.getTile(next);
 				
 				if (nearHQ && (tile == 3 || tile == 4)) {
@@ -180,7 +180,7 @@ public class Navigation {
 					updateAdjacent(curCheck, isRoad ? 1 : 2);
 					curCheck = next;
 					isRoad = tile == 2;
-					mapinfo[curCheck.x][curCheck.y] += checkNum * 9;
+					mapInfo[curCheck.x][curCheck.y] += checkNum * 9;
 					checkNum++;
 					break;
 				}
@@ -196,22 +196,22 @@ public class Navigation {
 				updateAdjacent(curCheck, isRoad ? 1 : 2);
 				curCheck = minNext;
 				isRoad = minRoad;
-				mapinfo[curCheck.x][curCheck.y] += checkNum * 9;
+				mapInfo[curCheck.x][curCheck.y] += checkNum * 9;
 				checkNum++;
 			}
 		}
 	}
 	
 	private static void updateAdjacent(MapLocation loc, int amount) {
-		int dist = (mapinfo[loc.x][loc.y] / 90000) + amount;
+		int dist = (mapInfo[loc.x][loc.y] / 90000) + amount;
 		for (int i = 8; i-- > 0;) {
 			MapLocation next = loc.add(dir[i]);
 			if (next.x < 0 || next.y < 0 || next.x >= width || next.y >= height) {
 				continue;
 			}
-			int oldDist = mapinfo[next.x][next.y] / 90000;
+			int oldDist = mapInfo[next.x][next.y] / 90000;
 			if (oldDist == 0 || oldDist > dist) {
-				mapinfo[next.x][next.y] = (dist * 90000) + ((i + 4) % 8) + 1;
+				mapInfo[next.x][next.y] = (dist * 90000) + ((i + 4) % 8) + 1;
 			}
 		}
 	}
@@ -226,9 +226,9 @@ public class Navigation {
 		path[curPathPos] = end;
 		
 		while (start.distanceSquaredTo(end) > checkDist && curPathPos + 1 < path.length) {
-			end = end.add(dir[(mapinfo[end.x][end.y] % 9) - 1]);
+			end = end.add(dir[(mapInfo[end.x][end.y] % 9) - 1]);
 			if (start.distanceSquaredTo(end) > checkDist) {
-				end = end.add(dir[(mapinfo[end.x][end.y] % 9) - 1]);
+				end = end.add(dir[(mapInfo[end.x][end.y] % 9) - 1]);
 			}
 			curPathPos++;
 			path[curPathPos] = end;
