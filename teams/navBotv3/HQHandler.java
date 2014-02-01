@@ -33,7 +33,7 @@ public class HQHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
-		if (rc.isActive() && rc.senseRobotCount() < 1) {
+		if (rc.isActive() && rc.senseRobotCount() < 25) {
 			trySpawn();
 		}
 		tryAttack();

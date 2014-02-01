@@ -8,17 +8,13 @@ public class SoldierHandler extends UnitHandler {
 		super(rcin);
 		Map.init(rc);
 		Navigation.init(rc);
-		Navigation.setDest(rc.senseEnemyHQLocation());
+		Navigation.setDest(rc.senseEnemyHQLocation(), 10);
 	}
 
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
-//		if (!Navigation.mapDone) {
-//			if (rc.readBroadcast(1) == 1)
-//				Navigation.mapDone = true;
-//		}
-		rc.setIndicatorString(2, "" + Navigation.dest);
+		rc.setIndicatorString(0, "" + SimpleNav.dest);
 		if (rc.isActive()) {
 			if (shouldAttack()) {
 				tryAttack();
