@@ -10,7 +10,7 @@ public class Attack {
 	private static Robot[] reallyCloseEnemies; // Within 5 squared distance
 	private static Robot[] closeEnemies; // Within 10 squared distance
 	private static Robot[] detectableEnemies; // Within 35 squared distance
-	private static MapLocation[] detectableEnemyLocations;
+	private static MapLocation[] detectableEnemyLocations; //map location within 35 squared distance
 	private static RobotController rc;
 	private static MapLocation myHQLocation;
 	private static MapLocation enemyHQLocation;
@@ -68,11 +68,12 @@ public class Attack {
 	 * 
 	 */
 	
+	public static void updateEnemies(RobotController rcin) {
+		
+	}
+	
 	/**
-	 * Need to consider when there are walls in the way, etc.
-	 * Probably should rewrite to use broadcast system.
 	 * Our bots will surround the enemy HQ.
-	 *
 	 * This should only set the surroundDestination appropriately, 
 	 * but should not change anything else or take any other action.
 	 *  
@@ -82,7 +83,7 @@ public class Attack {
 		int off = defaultOff;
 		myLocation = rc.getLocation();
 		if (mySurroundDestination == null) {
-			int mlin2 = rc.readBroadcast(26014);
+			int mlin2 = rc.readBroadcast(12014);
 			mySurroundDestination = new MapLocation(mlin2 / 100, mlin2 % 100);			
 		}
 		if (myLocation.x != mySurroundDestination.x || myLocation.y != mySurroundDestination.y) {
@@ -94,7 +95,7 @@ public class Attack {
 			if (isOccupied(off)) {
 				while (off > 0 && isOccupied(off)) {
 					off--;
-					int mlint = rc.readBroadcast(26000 + off);
+					int mlint = rc.readBroadcast(12000 + off);
 					mySurroundDestination = new MapLocation(mlint / 100, mlint % 100);
 				}					
 				Navigation.setDest(mySurroundDestination);
@@ -102,12 +103,12 @@ public class Attack {
 			}
 			return false;
 		}
-		rc.broadcast(27000 + offTarget, id);
+		rc.broadcast(12100 + offTarget, id);
 		return true;
 	}
 	
 	private static boolean isOccupied(int locNum) throws GameActionException {
-		return rc.readBroadcast(27000 + locNum) != 0;
+		return rc.readBroadcast(12100 + locNum) != 0;
 	}
 	
 	/**
@@ -123,15 +124,15 @@ public class Attack {
 		storeEnemiesWithinRange();
 		// TODO: Make HQ actually produce this 
 		myLocation = rc.getLocation();
-		squadronNumber = rc.readBroadcast(39300 + id);
-		numberOfUnitsWeHave = rc.readBroadcast(35020 + squadronNumber);
-		numberOfUnitsTheyHave = rc.readBroadcast(37001);
+		squadronNumber = rc.readBroadcast(13300 + id);
+		numberOfUnitsWeHave = rc.readBroadcast(13020 + squadronNumber);
+		numberOfUnitsTheyHave = rc.readBroadcast(12313);
 		healthLastRound = healthThisRound;
 		healthThisRound = rc.getHealth();
-		numberOfPASTRs = rc.readBroadcast(31000);
-		numberOfNTs = rc.readBroadcast(31001);
+		numberOfPASTRs = rc.readBroadcast(12311);
+		numberOfNTs = rc.readBroadcast(12312);
 //		Add squadronLeader boolean (true / false)
-		goal = rc.readBroadcast(39400 + id);
+		goal = rc.readBroadcast(13400 + id);
 		// Let teammates know you are being hurt
 		if (healthThisRound < healthLastRound) {
 			// Let teammates know that you are being attacked by a bot
@@ -148,6 +149,7 @@ public class Attack {
 		if (goal == 1) {
 			// mostly attack and retreat micro here
 			decideFightingMechanic();
+			rc.setIndicatorString(0, "");
 		} else if (goal == 2) {
 			// mostly attack, no retreat
 		} else if (goal == 3) {
@@ -169,8 +171,13 @@ public class Attack {
 	public static Direction highPDir() {
 		return Direction.NONE;
 	}
-	
-	public static 
+
+	/**
+	 * TODO later (instead of instantly joining a squadron, do it later)
+	 */
+	public static void regSquad() {
+		
+	}
 	
 	public static MapLocation findClosestEnemyLoc(Robot[] eInRange, boolean detect) throws GameActionException {
 		MapLocation closestML = null;

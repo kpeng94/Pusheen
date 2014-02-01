@@ -3,59 +3,43 @@ package kevinBot;
 import battlecode.common.*;
 
 /**
- * Strategy:
- * 
- * Things needed in broadcast system:
- * Delegating squadrons (SUPER IMPORTANT if we want to WIN)
- * 
  * Broadcast system:
- * 20000 - 29999: Locations
- *
- * 20000 - 20099: Locations that are good for building PASTRs based on order
- * 20100 - 20199: Locations that we need to cover to blockade the enemy HQ
- * 20200 - 20299: Memory, where we see the enemy units at
- *
- *
- * 24900 - 24999: Where our robots are located (24900 + robot_id as offset)
+ * 100 - 199: Broadcasts by our robots (round numbers + location)
+ * 11000 - 11099: Locations that are good for building PASTRs based on order
+ * 11100 - 11199: Memory, where we see the enemy units at
+ * 11300 - 11399: Where our robots are located (11300 + robot_id as offset)
  * 
- * 25999: length of surround locations
- * 26000 - 260xx: surround locations
- * 27000 - 270xx: whether the surround locations are occupied
- * 28000 - 280xx: whether the surround locations are claimed?
+ * 12000 - 120xx: surround locations
+ * 12100 - 121xx: whether the surround locations are occupied
  * 
- * 30000 - 39999: Logistic Information 
- * 
- * 30000: How many robots we have (controlled by the HQ)
- * 30001 - 30003: Assuming we spawn at most 90 robots, we can encode the ids of all robots alive in these 3 numbers.
+ * 12300: How many robots we have (controlled by the HQ)
+ * 12301 - 12303: Assuming we spawn at most 90 robots, we can encode the ids of all robots alive in these 3 numbers.
  * 		Description: For robots 1 to 30, the HQ will sense if they are alive or not, then sum (1 or 0) * 2^robot_id 
  * 					 and store that as an integer in channel 30001.
  * 					 The HQ will do similarly for 31 - 60 (channel 30002) and 61 - 90 (channel 30003).
- * 30004 - 30010: What the HQ will consider to be "safe" locations.
+ * 12304 - 12310: What the HQ will consider to be "safe" locations.
  * 
- * 31000: # of pastrs
- * 31001: # of NTs
+ * 12311: # of pastrs
+ * 12312: # of NTs
+ * 12313: # of enemies
  * 
- * 35000 - 35009: Squadron leaders
- * 35010 - 35019: Squadron locations roughly (avg)
- * 35020 - 35029: Squadron army size
- * 35030 - 35039: Squadron target locations
+ * 13000 - 13009: Squadron leaders
+ * 13010 - 13019: Squadron locations roughly (avg)
+ * 13020 - 13029: Squadron army size
+ * 13030 - 13039: Squadron target locations
  * 
- * 39300 - 39399: Squadron number (for attackers and pastr builders)
- * 39400 - 39499: HQ designates what each robots goal is.
+ * 13300 - 13399: Squadron number (for attackers and pastr builders)
+ * 13400 - 13499: HQ designates what each robots goal is.
  * 		1: Attack
  * 		2: Get PASTR
  * 		3: Scout
  * 		4: Build PASTR
  * 		5: Build NT
  * 		6: Defend
- * 39500 - 39599: Robots know they have already been suicided on.
- * 39600 - 39699: Robots know they're being attacked.					
- * 39700 - 39799: Robots think that they're about to get suicided on.
- * 39800 - 39899: Robot types
- * 39900 - 39999: Round number broadcast by our robots
- * 
- * 
- * 40000 - 40100: Target points around an enemy PASTR that our bots have already focused.
+ * 13500 - 13599: Robots know they have already been suicided on.
+ * 13600 - 13699: Robots know they're being attacked.					
+ * 13700 - 13799: Robots think that they're about to get suicided on.
+ * 13800 - 13899: Robot types
  * 
  */
 
@@ -152,8 +136,8 @@ public class HQHandler extends UnitHandler {
 				
 //				TODO: UPDATE SQUADRON NUMBERS LATER
 //				Currently all squad 1, attackers
-				rc.broadcast(39300 + rc.readBroadcast(0), 1);
-				rc.broadcast(39400 + rc.readBroadcast(0), 1);
+				rc.broadcast(13300 + rc.readBroadcast(0), 1);
+				rc.broadcast(13400 + rc.readBroadcast(0), 1);
 				updateLiveRobots();
 				numberOfRobots++;
 				return;
@@ -203,50 +187,65 @@ public class HQHandler extends UnitHandler {
 	 * Rough bytecode cost:
 	 */
 	private void updateLiveRobots() throws GameActionException {
-		if (Clock.getRoundNum() % 10 == 0 && Clock.getRoundNum() > 0) {
+		if (Clock.getRoundNum() > 0) {
 			int firstSet = 0;
 			int secondSet = 0;
 			int thirdSet = 0;
 			int aliveCount = 0;
 			
 			// Go only up to RobotIDs
+			int bc = rc.readBroadcast(0);
 			for (int i = 30; i-- > 0;) {
 				firstSet <<= 1;
-				int bc = rc.readBroadcast(39901 + i);
-				if (bc == Clock.getRoundNum() - 1) {
+				int bc2 = (rc.readBroadcast(101 + i)) & 2047;
+				if (bc2 == Clock.getRoundNum() - 1) {
 					firstSet++;
 					robotsAlive[aliveCount] = i;
 					aliveCount++;
-				} else if (bc > 0) {
+				} else if (bc2 > 0) {
 					// Robot has died. Get Squadron number
-					int sqnum = rc.readBroadcast(39300 + i);
-					rc.broadcast(35020 + sqnum, (rc.readBroadcast(35020 + sqnum)) - 1);
-				}
+					// Shouldn't happen too often.
+					int sqnum = rc.readBroadcast(13301 + i);
+					rc.broadcast(13020 + sqnum, (rc.readBroadcast(13020 + sqnum)) - 1);
+				} 
 			}
-			rc.broadcast(30001, firstSet);		
-			for (int i = 30; i-- > 0;) {
-				secondSet <<= 1;
-				if (rc.readBroadcast(39931 + i) == Clock.getRoundNum() - 1) {
-					secondSet++;
-					robotsAlive[aliveCount] = i;
-					aliveCount++;				
+			rc.setIndicatorString(0, "0: " + firstSet);
+			rc.broadcast(12301, firstSet);		
+			if (bc > 30) {
+				for (int i = 30; i-- > 0;) {
+					secondSet <<= 1;
+					int bc2 = rc.readBroadcast(131 + i) & 2047;
+					if (bc2 == Clock.getRoundNum() - 1) {
+						firstSet++;
+						robotsAlive[aliveCount] = i;
+						aliveCount++;						
+					} else if (bc2 > 0) {
+						// Robot has died. Get Squadron number
+						int sqnum = rc.readBroadcast(13331 + i);
+						rc.broadcast(13020 + sqnum, (rc.readBroadcast(13020 + sqnum)) - 1);
+					} 
 				}
-			}
-			rc.broadcast(30002, secondSet);
-			
-			// Maybe exclude this!
-			for (int i = 30; i-- > 0;) {
-				thirdSet <<= 1;
-				if (rc.readBroadcast(39961 + i) == Clock.getRoundNum() - 1) {
-					thirdSet++;
-					robotsAlive[aliveCount] = i;
-					aliveCount++;
+				rc.broadcast(12302, secondSet);				
+				if (bc > 60) {
+					for (int i = 30; i-- > 0;) {
+						thirdSet <<= 1;
+						int bc2 = rc.readBroadcast(131 + i) & 2047;
+						if (bc2 == Clock.getRoundNum() - 1) {
+							firstSet++;
+							robotsAlive[aliveCount] = i;
+							aliveCount++;						
+						} else if (bc2 > 0) {
+							// Robot has died. Get Squadron number
+							int sqnum = rc.readBroadcast(13361 + i);
+							rc.broadcast(13020 + sqnum, (rc.readBroadcast(13020 + sqnum)) - 1);
+						} 
+					}
+					rc.broadcast(12303, thirdSet);								
 				}
-			}
-			rc.broadcast(30003, thirdSet);			
+			} 
 			for (int i = aliveCount; i < 25; i++) {
 				robotsAlive[aliveCount] = -1;
-			}
+			}			
 		}
 	}
 	
@@ -321,8 +320,7 @@ public class HQHandler extends UnitHandler {
 						}
 						MapLocation ml = enemyHQLoc.add(ostrX[os], ostrY[os]);
 						if (rc.senseTerrainTile(ml) != TerrainTile.VOID) {
-							rc.broadcast(26000 + count, ml.x * 100 + ml.y);
-							rc.setIndicatorString(0, "I HAVE BROACASTED THIS");
+							rc.broadcast(12000 + count, ml.x * 100 + ml.y);
 							count++;
 						}
 					}
@@ -334,7 +332,7 @@ public class HQHandler extends UnitHandler {
 						}
 						MapLocation ml = enemyHQLoc.add(ostlX[os], ostlY[os]);
 						if (rc.senseTerrainTile(ml) != TerrainTile.VOID) {
-							rc.broadcast(26000 + count, ml.x * 100 + ml.y);
+							rc.broadcast(12000 + count, ml.x * 100 + ml.y);
 							count++;
 						}
 					}
@@ -348,7 +346,7 @@ public class HQHandler extends UnitHandler {
 						}
 						MapLocation ml = enemyHQLoc.add(osblX[os], osblY[os]);
 						if (rc.senseTerrainTile(ml) != TerrainTile.VOID) {
-							rc.broadcast(26000 + count, ml.x * 100 + ml.y);
+							rc.broadcast(12000 + count, ml.x * 100 + ml.y);
 							count++;
 						}
 					}
@@ -360,7 +358,7 @@ public class HQHandler extends UnitHandler {
 						}
 						MapLocation ml = enemyHQLoc.add(osbrX[os], osbrY[os]);
 						if (rc.senseTerrainTile(ml) != TerrainTile.VOID) {
-							rc.broadcast(26000 + count, ml.x * 100 + ml.y);
+							rc.broadcast(12000 + count, ml.x * 100 + ml.y);
 							count++;
 						}
 					}

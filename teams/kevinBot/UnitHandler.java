@@ -41,7 +41,7 @@ public abstract class UnitHandler {
 		round = Clock.getRoundNum();
 		MapLocation curLoc = rc.getLocation();
 		int intLoc = (curLoc.x << 7) + curLoc.y;
-		rc.broadcast(100 * id, (intLoc << 11) + round);
+		rc.broadcast(100 + id, (intLoc << 11) + round);
 	}
 	
 }

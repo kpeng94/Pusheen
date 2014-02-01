@@ -26,9 +26,6 @@ public class SoldierHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
-
-
-		
 		// Navigation for each soldier
 		if (!Navigation.mapDone) {
 			if (rc.readBroadcast(1) == 1)
@@ -36,12 +33,16 @@ public class SoldierHandler extends UnitHandler {
 		}
 				
 		if (rc.isActive()) {
-			tryAttack();			
+			tryAttack();
 			tryMove();					
 		}
 		
 		calculate();
 	}	
+	
+	private void detectLeader() throws GameActionException {
+		
+	}
 	
 	/* Attempts to attack */
 	private void tryAttack() throws GameActionException {
