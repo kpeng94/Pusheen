@@ -18,7 +18,7 @@ public class SoldierHandler extends UnitHandler {
 //			if (rc.readBroadcast(1) == 1)
 //				Navigation.mapDone = true;
 //		}
-		
+		rc.setIndicatorString(2, "" + Navigation.dest);
 		if (rc.isActive()) {
 			if (shouldAttack()) {
 				tryAttack();

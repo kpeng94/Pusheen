@@ -40,7 +40,7 @@ public class Navigation {
 	/* Sets the destination */
 	public static void setDest(MapLocation destination) throws GameActionException {
 		destination = getNearestOpenDest(destination);
-		if (dest == null || (dest.x != destination.x && dest.y != destination.y)) {
+		if (dest == null || dest.x != destination.x || dest.y != destination.y) {
 			dest = destination;
 			mapInfo = new int[width][height];
 			done = false;
@@ -148,7 +148,6 @@ public class Navigation {
 					for (int i = end; i-- > 0;) {
 						int newDist = buffer[i].distanceSquaredTo(dest);
 						if (newDist < minDist) {
-							System.out.println(buffer[i] + " " + newDist);
 							minDist = newDist;
 							minLoc = buffer[i];
 						}
