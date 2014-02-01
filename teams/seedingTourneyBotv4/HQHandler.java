@@ -12,12 +12,14 @@ public class HQHandler extends UnitHandler {
 	int numberOfRobots = 0;
 	int numberOfNoiseTowers = 0;
 
-	public HQHandler(RobotController rcin) {
+	public HQHandler(RobotController rcin) throws GameActionException {
 		super(rcin);
 		ourLoc = rc.senseHQLocation();
 		enemyLoc = rc.senseEnemyHQLocation();
 		getSpawn();
 		CowMap.init(rc);
+		Map.init(rc);
+		Map.HQinit();
 	}
 
 	/* Generates spawn list order */

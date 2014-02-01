@@ -1,6 +1,5 @@
 package seedingTourneyBotv4;
 
-import navBotv3.Map;
 import battlecode.common.*;
 
 public class SoldierHandler extends UnitHandler {
@@ -32,8 +31,9 @@ public class SoldierHandler extends UnitHandler {
 		myHQtoenemyHQint = myHQtoenemyHQ.ordinal();
 		closeToMe = new MapLocation((myHQLocation.x + enemyHQLocation.x) / 2, 
 													 (myHQLocation.y + enemyHQLocation.y) / 2);
+		Map.init(rc);
 		Navigation.init(rc);
-		Navigation.setDest(closeToMe, 25);
+		Navigation.setDest(closeToMe, 10);
 	}
 
 	@Override
@@ -177,7 +177,7 @@ public class SoldierHandler extends UnitHandler {
 	 */
 	private void tryToBeUseful() throws GameActionException {
 		targetLocation = closeToMe;
-		Navigation.setDest(targetLocation, 16);
+		Navigation.setDest(targetLocation, 10);
 	}
 
 	/**
