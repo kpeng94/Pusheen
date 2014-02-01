@@ -46,11 +46,7 @@ public class CowMap {
 		}
 		else if (!bestDone) {
 			calculateBest();
-//			System.out.println(Clock.getBytecodesLeft());
 		}
-//		else {
-//			System.out.println("Best: " + bestLoc.x + " " + bestLoc.y + ": " + bestCows);
-//		}
 	}
 	
 	/* Calculates the coarse map of cows */
@@ -93,13 +89,13 @@ public class CowMap {
 	}
 	
 	/* Checks a 2x2 region to make sure that its not void */
-	private static void checkBest(double cows, MapLocation loc) {
+	private static void checkBest(double cows, MapLocation loc) throws GameActionException {
 		for (int i = checkDirs.length; i-- > 0;) {
 			MapLocation newLoc = loc.add(checkDirs[i]);
 			if (newLoc.x == ourHQ.x && newLoc.y == ourHQ.y) {
 				continue;
 			}
-			if (rc.senseTerrainTile(newLoc) != TerrainTile.VOID) {
+			if (Map.getTile(newLoc) < 3) {
 				bestCows = cows;
 				bestLoc = newLoc;
 				bestDist = ourHQ.distanceSquaredTo(bestLoc);

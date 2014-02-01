@@ -31,7 +31,9 @@ public class SoldierHandler extends UnitHandler {
 		myHQtoenemyHQint = myHQtoenemyHQ.ordinal();
 		closeToMe = new MapLocation((myHQLocation.x + enemyHQLocation.x) / 2, 
 													 (myHQLocation.y + enemyHQLocation.y) / 2);
-		Navigation.init(rc, closeToMe, 25);
+		Map.init(rc);
+		Navigation.init(rc);
+		Navigation.setDest(closeToMe, 10);
 	}
 
 	@Override
@@ -39,11 +41,6 @@ public class SoldierHandler extends UnitHandler {
 		super.execute();
 		myLoc = rc.getLocation();
 		checkToFillSpots();
-		// Navigation for each soldier
-		if (!Navigation.mapDone) {
-			if (rc.readBroadcast(1) == 1)
-				Navigation.mapDone = true;
-		}
 		
 		// Keep checking for the best cow growth rate location until the HQ broadcasts it.
 		bestCGRLoc = rc.readBroadcast(10);
@@ -140,7 +137,7 @@ public class SoldierHandler extends UnitHandler {
 	}
 
 	private void goHelp() throws GameActionException {
-		Navigation.setDest(targetLocation);	
+		Navigation.setDest(targetLocation);
 	}
 
 	private void callForHelp() throws GameActionException {
@@ -180,7 +177,7 @@ public class SoldierHandler extends UnitHandler {
 	 */
 	private void tryToBeUseful() throws GameActionException {
 		targetLocation = closeToMe;
-		Navigation.setDest(targetLocation, 16);
+		Navigation.setDest(targetLocation, 10);
 	}
 
 	/**
@@ -364,15 +361,16 @@ public class SoldierHandler extends UnitHandler {
 		Robot[] nearbyEnemies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
 		Robot[] nearbyAllies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam());
 		if (nearbyEnemies.length==0){
-			Navigation.swarmMove();
+			Navigation.move();
 		} else if (nearbyAllies.length>nearbyEnemies.length){
-			Navigation.swarmMove(); 
+			Navigation.move(); 
 		}
 	}
 	
 	/* Does calculations */
 	private void calculate() throws GameActionException {
-		Navigation.calculate();
+		Navigation.calculate(1000);
+		Map.calculate(1000);
 	}
 
 	/* Code for the robot that will build the pastr */
