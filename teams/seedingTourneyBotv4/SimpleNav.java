@@ -3,7 +3,7 @@ package seedingTourneyBotv4;
 import battlecode.common.*;
 
 public class SimpleNav {
-	static final int checkDist = 4;
+	static final int checkDist = 3;
 	
 	public static RobotController rc;
 
