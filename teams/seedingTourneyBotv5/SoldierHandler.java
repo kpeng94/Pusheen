@@ -23,6 +23,9 @@ public class SoldierHandler extends UnitHandler {
 	public static MapLocation helpLoc;
 	public static MapLocation myLoc;
 	
+	public static Robot[] nearbyEnemies;
+	public static Robot[] nearbyAllies;
+	
 	public SoldierHandler(RobotController rcin) throws GameActionException {
 		super(rcin);
 		enemyHQLocation = rc.senseEnemyHQLocation();
@@ -39,9 +42,9 @@ public class SoldierHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
-		rc.setIndicatorString(0, "" + SimpleNav.dest);
-		rc.setIndicatorString(2, "" + SimpleNav.curPathPos);
 		myLoc = rc.getLocation();
+		nearbyEnemies = rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
+		nearbyAllies = rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam());
 		checkToFillSpots();
 		
 		// Keep checking for the best cow growth rate location until the HQ broadcasts it.
@@ -79,7 +82,6 @@ public class SoldierHandler extends UnitHandler {
 		
 		if (rc.isActive()) {
 			if (shouldRetreat()){
-				Robot[] nearbyEnemies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
 				MapLocation closestEnemy=closestTarget(nearbyEnemies);
 				Direction enemyDir=rc.getLocation().directionTo(closestEnemy);
 				
@@ -99,7 +101,7 @@ public class SoldierHandler extends UnitHandler {
 				if (targetLocation.x != -1 && (rc.getLocation().x != targetLocation.x || 
 						rc.getLocation().y != targetLocation.y)
 						&& rc.readBroadcast(40000+id)==0) {
-					tryMove();					
+					tryMove();			
 				} else {
 
 					moveForwardAndBack();
@@ -111,13 +113,12 @@ public class SoldierHandler extends UnitHandler {
 	}
 	
 	private boolean shouldRetreat() throws GameActionException {
-		Robot[] nearbyEnemies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
-		Robot[] nearbyAllies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam());
-		
-		if (nearbyEnemies.length!=0){
+		int enemyCount = countRobots(nearbyEnemies);
+		int allyCount = countRobots(nearbyAllies);
+		if (enemyCount!=0){
 			MapLocation closestEnemy=closestTarget(nearbyEnemies);
 
-			if (nearbyAllies.length<nearbyEnemies.length || rc.getLocation().distanceSquaredTo(closestEnemy)<=8){
+			if (allyCount < enemyCount|| rc.getLocation().distanceSquaredTo(closestEnemy)<=8){
 				return true;
 			}
 		}
@@ -163,13 +164,13 @@ public class SoldierHandler extends UnitHandler {
 	}
 
 	private void callForHelp() throws GameActionException {
-		Robot nearestenemy=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent())[0];
+		Robot nearestenemy=nearbyEnemies[0];
 		MapLocation enemyLoc=rc.senseRobotInfo(nearestenemy).location;
 		myLoc = rc.getLocation();
 		MapLocation helpLoc=myLoc.add(myLoc.directionTo(enemyLoc), (int)Math.sqrt(myLoc.distanceSquaredTo(enemyLoc))/2);
 		
 		rc.broadcast(50000, helpLoc.x*100+helpLoc.y);
-		rc.setIndicatorString(1, helpLoc.x+", "+helpLoc.y);
+//		rc.setIndicatorString(1, helpLoc.x+", "+helpLoc.y);
 	}
 
 	private void buildNoiseTower(MapLocation destination) throws GameActionException {
@@ -244,12 +245,11 @@ public class SoldierHandler extends UnitHandler {
 	}
 
 	private boolean shouldCallForHelp() throws GameActionException {
-		Robot[] nearbyEnemy = rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
-		if (nearbyEnemy.length!=0){
-			if (nearbyEnemy.length==1 && rc.senseRobotInfo(nearbyEnemy[0]).type==RobotType.HQ){
+		if (nearbyEnemies.length!=0){
+			if (nearbyEnemies.length==1 && rc.senseRobotInfo(nearbyEnemies[0]).type==RobotType.HQ){
 				return false;
 			} else {
-				rc.broadcast(51000, nearbyEnemy.length+2);
+				rc.broadcast(51000, nearbyEnemies.length+2);
 				return true;
 			}
 		} 
@@ -355,12 +355,11 @@ public class SoldierHandler extends UnitHandler {
 
 	/* Determines whether the robot should attack this turn */
 	private boolean shouldAttack() throws GameActionException {
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
 		if (shouldCallForHelp()){
 			callForHelp();
 		}
 		
-		MapLocation targetLoc = prioritizeTarget(enemyRobots);
+		MapLocation targetLoc = prioritizeTarget(nearbyEnemies);
 		if (targetLoc.x != enemyHQLocation.x || targetLoc.y != enemyHQLocation.y) {
 			prioritizedEnemy = targetLoc;
 			return true;
@@ -380,12 +379,11 @@ public class SoldierHandler extends UnitHandler {
 	
 	/* Attempts to move */
 	private void tryMove() throws GameActionException {
-		Robot[] nearbyEnemies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam().opponent());
-		Robot[] nearbyAllies=rc.senseNearbyGameObjects(Robot.class, 35, rc.getTeam());
-		
-		if (nearbyEnemies.length==0){
+		int enemyCount = countRobots(nearbyEnemies);
+		int allyCount = countRobots(nearbyAllies);
+		if (enemyCount==0){
 			Navigation.move();
-		} else if (nearbyAllies.length>nearbyEnemies.length){
+		} else if (allyCount > enemyCount + 1){
 			Navigation.move(); 
 		} 
 	}
@@ -622,6 +620,16 @@ public class SoldierHandler extends UnitHandler {
 			}
 		}
 		return false;
+	}
+	
+	private int countRobots(Robot[] robots) throws GameActionException {
+		int count = 0;
+		for (int i = robots.length; i-- > 0;) {
+			if (rc.senseRobotInfo(robots[i]).type == RobotType.SOLDIER) {
+				count ++;
+			}
+		}
+		return count;
 	}
 	
 }

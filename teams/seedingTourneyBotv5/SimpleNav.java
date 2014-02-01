@@ -133,9 +133,13 @@ public class SimpleNav {
 		path[curPathPos] = end;
 		
 		while (start.distanceSquaredTo(end) > checkDist && curPathPos + 1 < path.length) {
-			end = end.add(Navigation.dir[(mapInfo[end.x][end.y] % 9) - 1]);
-			if (start.distanceSquaredTo(end) > checkDist) {
+			if ((mapInfo[end.x][end.y] % 9) > 0) {
 				end = end.add(Navigation.dir[(mapInfo[end.x][end.y] % 9) - 1]);
+			}
+			if (start.distanceSquaredTo(end) > checkDist) {
+				if ((mapInfo[end.x][end.y] % 9) > 0) {
+					end = end.add(Navigation.dir[(mapInfo[end.x][end.y] % 9) - 1]);
+				}
 			}
 			curPathPos++;
 			path[curPathPos] = end;
