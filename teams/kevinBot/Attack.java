@@ -130,6 +130,7 @@ public class Attack {
 		squadronLeader = rc.readBroadcast(13000 + squadronNumber) == id;
 		healthLastRound = healthThisRound;
 		healthThisRound = rc.getHealth();
+		goal = rc.readBroadcast(13400 + id);
 		
 		if (squadronLeader) {
 			numberOfUnitsWeHave = rc.readBroadcast(13020 + squadronNumber);
@@ -137,7 +138,7 @@ public class Attack {
 			numberOfPASTRs = rc.readBroadcast(12311);
 			numberOfNTs = rc.readBroadcast(12312);
 		}
-		goal = rc.readBroadcast(13400 + id);
+
 		// Let teammates know you are being hurt
 		if (healthThisRound < healthLastRound) {
 			// Let teammates know that you are being attacked by a bot
@@ -151,14 +152,7 @@ public class Attack {
 			}
 		}
 		
-//		if (goal == 1) {
-			// mostly attack and retreat micro here
-			decideFightingMechanic();
-//		} else if (goal == 2) {
-//			// mostly attack, no retreat
-//		} else if (goal == 3) {
-//			
-//		}
+		decideFightingMechanic();
 		
 		// Predict what your teammates are going to do and calculate and move as a result (if we can)
 
@@ -168,6 +162,12 @@ public class Attack {
 		}
 	}
 
+	public static MapLocation updateRallyPoint(MapLocation ml) throws GameActionException {
+		if(squadronLeader) {
+			rc.broadcast(13030 + squadronNumber, ml.x * 100 + ml.y);
+		}
+		return null;
+	}
 	/**
 	 * Computes the direction that I would most likely move in next move
 	 * @return
@@ -264,40 +264,38 @@ public class Attack {
 		}
 		Direction toMyHQ = myLocation.directionTo(myHQLocation);
 		int hqCloseness = myLocation.distanceSquaredTo(myHQLocation);
-		takeStep(oppositeDir, toMyHQ, hqCloseness, 100);
-		return true;			
+		return takeStep(oppositeDir, toMyHQ, hqCloseness, 100);
 	}
 
 	/**
 	 * For attacking mode
 	 */
 	private static void decideFightingMechanic() throws GameActionException {
-		rc.setIndicatorString(0, "" + numberOfUnitsWeHave + " them though: " + numberOfUnitsTheyHave);
+//		rc.setIndicatorString(0, "" + numberOfUnitsWeHave + " them though: " + numberOfUnitsTheyHave);
 		if (squadronLeader) {
-			if (numberOfUnitsWeHave - numberOfUnitsTheyHave >= 3 && numberOfUnitsWeHave >= numberOfUnitsTheyHave * 2) {
-				attackAndRetreat();
-				rc.setIndicatorString(2, "They have not beat us");
+			if (numberOfUnitsWeHave - numberOfUnitsTheyHave >= 5 && numberOfUnitsWeHave >= numberOfUnitsTheyHave * 2) {
+				rc.broadcast(13040 + squadronNumber, 4);				
+				attackAndRetreat(true);
+			} else if (numberOfUnitsWeHave - numberOfUnitsTheyHave >= 3) {
 				rc.broadcast(13040 + squadronNumber, 1);
+				attackAndRetreat(false);
 			} else if (numberOfUnitsWeHave - numberOfUnitsTheyHave <= -2) {
-				rc.setIndicatorString(2, "They have beat us");
-				justRetreat();
 				rc.broadcast(13040 + squadronNumber, 2);
+				justRetreat();
 			} else {
-				rc.setIndicatorString(2, "They have not beat us OBVIOUSLY");
-				suicideAttackAndRetreat();
 				rc.broadcast(13040 + squadronNumber, 3);
+				suicideAttackAndRetreat();
 			}			
 		} else {
 			int bc = rc.readBroadcast(13040 + squadronNumber);
 			if (bc == 1) {
-				attackAndRetreat();
-				rc.setIndicatorString(2, "They have not beat us");				
+				attackAndRetreat(false);
 			} else if (bc == 2) {
-				rc.setIndicatorString(2, "They have beat us");
 				justRetreat();
 			} else if (bc == 3) {
-				rc.setIndicatorString(2, "They have not beat us OBVIOUSLY");
 				suicideAttackAndRetreat();				
+			} else if (bc == 4) {
+				attackAndRetreat(true);
 			}
 		}
 	}
@@ -306,13 +304,21 @@ public class Attack {
 	 * Attack and run away as necessary.
 	 * @throws GameActionException
 	 */
-	private static void attackAndRetreat() throws GameActionException {
+	private static void attackAndRetreat(boolean rushIn) throws GameActionException {
 		if (reallyCloseEnemies.length >= 1) {
 			MapLocation ml = findClosestEnemyLoc(reallyCloseEnemies, false);
 			Direction dte = myLocation.directionTo(ml);
-			retreat(false, dte, ml);
+			if (squadronLeader) {
+				updateRallyPoint(myLocation.add(dte, -1));
+			}
+			if (!retreat(false, dte, ml) && rc.isActive() && rc.canAttackSquare(ml)) {
+				rc.attackSquare(ml);
+			}
 		} else if (closeEnemies.length >= 1) {
 			MapLocation ml = findLowestHP(closeEnemies);
+			if (squadronLeader) {
+				updateRallyPoint(myLocation);
+			}
 			if (rc.isActive() && rc.canAttackSquare(ml)) {
 				rc.attackSquare(ml);
 			}
@@ -320,7 +326,7 @@ public class Attack {
 			MapLocation ml = findClosestEnemyLoc(detectableEnemies, true);
 			if (ml != null) {
 				Direction dir = myLocation.directionTo(ml);
-				if (!inEnemyRange(detectableEnemyLocations, myLocation.add(dir))) {
+				if (rushIn || !inEnemyRange(detectableEnemyLocations, myLocation.add(dir))) {
 					takeStep(dir);
 				}				
 			}
@@ -331,11 +337,15 @@ public class Attack {
 		if (reallyCloseEnemies.length >= 1) {
 			MapLocation ml = findClosestEnemyLoc(reallyCloseEnemies, false);
 			Direction dte = myLocation.directionTo(ml);
-			retreat(false, dte, ml);
+			if (!retreat(false, dte, ml) && rc.isActive() && rc.canAttackSquare(ml)) {
+				rc.attackSquare(ml);
+			}
 		} else if (closeEnemies.length >= 1) {
 			MapLocation ml = findClosestEnemyLoc(closeEnemies, false);
 			Direction dte = myLocation.directionTo(ml);
-			retreat(false, dte, ml);
+			if (!retreat(false, dte, ml) && rc.isActive() && rc.canAttackSquare(ml)) {
+				rc.attackSquare(ml);
+			}
 		}
 	}
 	
@@ -347,14 +357,29 @@ public class Attack {
 			if (reallyCloseEnemies.length >= 1) {
 				MapLocation ml = findClosestEnemyLoc(reallyCloseEnemies, false);
 				Direction dte = myLocation.directionTo(ml);
-				retreat(false, dte, ml);
 			} else if (closeEnemies.length >= 1) {
 				MapLocation ml = findClosestEnemyLoc(closeEnemies, false);
 			}			
+		} else {
+			if (reallyCloseEnemies.length >= 1) {
+				MapLocation ml = findClosestEnemyLoc(reallyCloseEnemies, false);
+				Direction dte = myLocation.directionTo(ml);
+				if (!retreat(false, dte, ml) && rc.isActive() && rc.canAttackSquare(ml)) {
+					rc.attackSquare(ml);
+				}
+			} else if (closeEnemies.length >= 1) {
+				MapLocation ml = findClosestEnemyLoc(closeEnemies, false);
+				Direction dte = myLocation.directionTo(ml);
+				if (!retreat(false, dte, ml) && rc.isActive() && rc.canAttackSquare(ml)) {
+					rc.attackSquare(ml);
+				}
+			}			
 		}
-		
 	}
 
+	private static void calculateSquadMidpoint() {
+	}
+	
 	private static boolean canSuicide() {
 		return false;
 	}

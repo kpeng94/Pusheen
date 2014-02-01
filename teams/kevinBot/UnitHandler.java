@@ -14,6 +14,7 @@ public abstract class UnitHandler {
 	protected RobotController rc; // Robot Controller
 	protected int id;
 	protected int round;
+	protected MapLocation curLoc;
 	
 	/* Initializes information during spawn */
 	public UnitHandler(RobotController rcin) {
@@ -31,6 +32,7 @@ public abstract class UnitHandler {
 	
 	/* Executes every round */
 	public void execute() throws GameActionException {
+		curLoc = rc.getLocation();
 		if (id != 0) {
 			broadcastSelf();
 		}
@@ -39,7 +41,6 @@ public abstract class UnitHandler {
 	/* Broadcasts unit's own position and round number */
 	private void broadcastSelf() throws GameActionException {
 		round = Clock.getRoundNum();
-		MapLocation curLoc = rc.getLocation();
 		int intLoc = (curLoc.x << 7) + curLoc.y;
 		rc.broadcast(100 + id, (intLoc << 11) + round);
 	}

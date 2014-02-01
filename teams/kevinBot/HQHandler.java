@@ -28,6 +28,7 @@ import battlecode.common.*;
  * 13020 - 13029: Squadron army size
  * 13030 - 13039: Squadron target locations
  * 13040 - 13049: Squadron leader commands
+ * 13050 - 13059: Latest addition to squadron
  * 
  * 13300 - 13399: Squadron number (for attackers and pastr builders)
  * 13400 - 13499: HQ designates what each robots goal is.
@@ -74,8 +75,6 @@ public class HQHandler extends UnitHandler {
 	private static int[] squadronTwo;
 	private static int[] squadronThree;
 	private static int[] squadronFour;
-	private static int[] squadronFive;
-	private static int[] squadronSix;
 	private static int robotIDs = 0;
 	
 	MapLocation myHQLoc, enemyHQLoc;
@@ -141,7 +140,7 @@ public class HQHandler extends UnitHandler {
 					rc.broadcast(13301 + rc.readBroadcast(0), 1);
 					rc.broadcast(13401 + rc.readBroadcast(0), 1);
 					rc.broadcast(13020 + 1, rc.readBroadcast(13020 + 1) + 1);
-					rc.broadcast(13041, 1);
+					rc.broadcast(13001, 1);
 				} else {
 					rc.broadcast(13300 + rc.readBroadcast(0), 1);
 					rc.broadcast(13400 + rc.readBroadcast(0), 1);					
@@ -310,9 +309,19 @@ public class HQHandler extends UnitHandler {
 		
 	}
 	
-	private void updateSquadrons() {
-		if (Clock.getRoundNum() < 1000) {
-			
+	private void updateSquadrons() throws GameActionException {
+		int sqoc= 0;
+		squadronOne = new int[25];
+		squadronTwo = new int[25];
+		squadronThree = new int[25];
+		squadronFour = new int[25];
+		for (int i = rc.readBroadcast(0); i-- > 0;) {
+			if (rc.readBroadcast(101 + i) == Clock.getRoundNum() - 1) {
+				if (rc.readBroadcast(13301 + i) == 1) {
+					squadronOne[sqoc] = i;
+					sqoc++;
+				}
+			}
 		}
 	}
 	

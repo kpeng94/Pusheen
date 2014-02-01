@@ -10,6 +10,7 @@ public class SoldierHandler extends UnitHandler {
 	public static MapLocation closeToMe; 
 	public static Direction myHQtoenemyHQ;
 	public static int myHQtoenemyHQint;
+	public static MapLocation ctl;
 	
 	public SoldierHandler(RobotController rcin) {
 		super(rcin);
@@ -19,6 +20,7 @@ public class SoldierHandler extends UnitHandler {
 		myHQtoenemyHQint = myHQtoenemyHQ.ordinal();
 		closeToMe = new MapLocation((myHQLocation.x + enemyHQLocation.x) / 2, 
 													 (myHQLocation.y + enemyHQLocation.y) / 2);
+		ctl = closeToMe;
 		Navigation.init(rc, closeToMe, 25);
 		Attack.init(rc, id, closeToMe);
 	}
@@ -26,19 +28,23 @@ public class SoldierHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
+		
 		// Navigation for each soldier
 		if (!Navigation.mapDone) {
 			if (rc.readBroadcast(1) == 1)
 				Navigation.mapDone = true;
 		}
 		int squadronNumber = rc.readBroadcast(13300 + id);
-		boolean squadronLeader = rc.readBroadcast(13000 + squadronNumber) == id;		
+		boolean squadronLeader = (rc.readBroadcast(13000 + squadronNumber) == id);		
+		int bc = rc.readBroadcast(13030 + squadronNumber);
+		if (bc != 0) {
+			ctl = new MapLocation(bc / 100, bc % 100);
+		}
 		if (rc.isActive()) {
-			if (!squadronLeader && rc.readBroadcast(13040 + squadronNumber) != 0) {
+			if (!squadronLeader && rc.readBroadcast(13040 + squadronNumber) != 0 && curLoc.distanceSquaredTo(ctl) < 9) {
 				tryAttack();
-			} else if (squadronLeader) {
+			} else if (squadronLeader && curLoc.distanceSquaredTo(ctl) < 4) {
 				tryAttack();
-				tryMove();													
 			} else {
 				tryMove();													
 			}
