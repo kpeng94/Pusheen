@@ -8,7 +8,6 @@ public class Navigation {
 	static final int[] reversedForward = new int[] {7, 1, 0};
 	static final int checkDist = 4;
 	
-	public static int[] intdirs;
 	public static RobotController rc;
 	public static int width;
 	public static int height;
@@ -22,9 +21,9 @@ public class Navigation {
 	public static boolean pathDone; // Path generation complete
 	public static MapLocation dest; // Destination location
 	public static int radius; // Radius to swarm around destination
-	public static int[] mapinfo; // Explored map info
+	public static int[][] mapinfo; // Explored map info
 	
-	public static int[] path;
+	public static MapLocation[] path;
 	public static int curPathPos;
 	
 	public static MapLocation curCheck;
@@ -41,7 +40,6 @@ public class Navigation {
 		rc = rcin;
 		width = rc.getMapWidth();
 		height = rc.getMapHeight();
-		intdirs = new int[] {-1, height - 1, height, height + 1, 1, 1 - height, -height, -1 - height};
 		
 		ourHQ = rc.senseHQLocation();
 		enemyHQ = rc.senseEnemyHQLocation();
@@ -64,7 +62,7 @@ public class Navigation {
 		if (dest == null || (dest.x != destination.x && dest.y != destination.y)) {
 			pathDone = false;
 			dest = destination;
-			mapinfo = new int[width * height];
+			mapinfo = new int[width][height];
 			curCheck = rc.getLocation();
 			checkNum = 0;
 			isRoad = Map.getTile(curCheck) == 2;
@@ -165,25 +163,24 @@ public class Navigation {
 			
 			for (int i = 8; i-- > 0;) {
 				MapLocation next = curCheck.add(dir[(toDest + reversedAll[i]) % 8]);
-				int intloc = toInt(next);
-				if (intloc < 0 || intloc > width * height) {
+				if (next.x < 0 || next.y < 0 || next.x >= width || next.y >= height) {
 					continue;
 				}
-				int roundNum = (mapinfo[intloc] % 90000) / 9;
+				int roundNum = (mapinfo[next.x][next.y] % 90000) / 9;
 				int tile = Map.getTile(next);
 				
 				if (nearHQ && (tile == 3 || tile == 4)) {
 					continue;
 				}
-				if (!nearHQ && tile > 2) {
+				else if (!nearHQ && tile > 2) {
 					continue;
 				}
 				
 				if (roundNum == 0) {
-					updateAdjacent(toInt(curCheck), isRoad ? 1 : 2);
+					updateAdjacent(curCheck, isRoad ? 1 : 2);
 					curCheck = next;
 					isRoad = tile == 2;
-					mapinfo[toInt(curCheck)] += checkNum * 9;
+					mapinfo[curCheck.x][curCheck.y] += checkNum * 9;
 					checkNum++;
 					break;
 				}
@@ -196,42 +193,42 @@ public class Navigation {
 				}
 			}
 			if (minNext != null) {
-				updateAdjacent(toInt(curCheck), isRoad ? 1 : 2);
+				updateAdjacent(curCheck, isRoad ? 1 : 2);
 				curCheck = minNext;
 				isRoad = minRoad;
-				mapinfo[toInt(curCheck)] += checkNum * 9;
+				mapinfo[curCheck.x][curCheck.y] += checkNum * 9;
 				checkNum++;
 			}
 		}
 	}
 	
-	private static void updateAdjacent(int loc, int amount) {
-		int dist = (mapinfo[loc] / 90000) + amount;
+	private static void updateAdjacent(MapLocation loc, int amount) {
+		int dist = (mapinfo[loc.x][loc.y] / 90000) + amount;
 		for (int i = 8; i-- > 0;) {
-			int intloc = loc + intdirs[i];
-			if (intloc >= 0 && intloc < width * height) {
-				int oldDist = mapinfo[intloc] / 90000;
-				if (oldDist == 0 || oldDist > dist) {
-					mapinfo[intloc] = (dist * 90000) + ((i + 4) % 8) + 1;
-				}
+			MapLocation next = loc.add(dir[i]);
+			if (next.x < 0 || next.y < 0 || next.x >= width || next.y >= height) {
+				continue;
+			}
+			int oldDist = mapinfo[next.x][next.y] / 90000;
+			if (oldDist == 0 || oldDist > dist) {
+				mapinfo[next.x][next.y] = (dist * 90000) + ((i + 4) % 8) + 1;
 			}
 		}
 	}
 	
-	private static void backTrace(MapLocation startPos) throws GameActionException {
+	private static void backTrace(MapLocation start) throws GameActionException {
 		if (curCheck.distanceSquaredTo(dest) <= radius) {
 			pathDone = true;
 		}
-		int start = toInt(startPos);
-		int end = toInt(curCheck);
+		MapLocation end = curCheck;
 		curPathPos = 0;
-		path = new int[width + height];
+		path = new MapLocation[width + height];
 		path[curPathPos] = end;
 		
-		while (intDist(start, end) > checkDist && curPathPos + 1 < path.length) {
-			end += intdirs[(mapinfo[end] % 9) - 1];
-			if (intDist(start, end) > checkDist) {
-				end += intdirs[(mapinfo[end] % 9) - 1];
+		while (start.distanceSquaredTo(end) > checkDist && curPathPos + 1 < path.length) {
+			end = end.add(dir[(mapinfo[end.x][end.y] % 9) - 1]);
+			if (start.distanceSquaredTo(end) > checkDist) {
+				end = end.add(dir[(mapinfo[end.x][end.y] % 9) - 1]);
 			}
 			curPathPos++;
 			path[curPathPos] = end;
@@ -242,33 +239,16 @@ public class Navigation {
 	}
 	
 	private static void pathMove() throws GameActionException {
-		MapLocation pos = fromInt(path[curPathPos]);
-		trivialMove(pos, reversedAll);
+		MapLocation pos = path[curPathPos];
 		if (rc.getLocation().distanceSquaredTo(pos) < checkDist + 1) {
 			curPathPos--;
 		}
+		rc.setIndicatorString(1, "" + pos);
+		trivialMove(pos, reversedAll);
 	}
 	
 	public static void complexCalculate() {
 		
-	}
-	
-	public static int intDist(int pos1, int pos2) {
-		int xdiff = (pos1 / height) - (pos2 / height);
-		int ydiff = (pos1 % height) - (pos2 % height);
-		return xdiff * xdiff + ydiff * ydiff;
-	}
-	
-	public static MapLocation fromInt(int loc) {
-		return new MapLocation(loc / height, loc % height);
-	}
-	
-	public static int toInt(MapLocation loc) {
-		return loc.x * height + loc.y;
-	}
-	
-	public static int toInt(int x, int y) {
-		return x * height + y;
 	}
 	
 }

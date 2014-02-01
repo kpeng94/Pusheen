@@ -7,12 +7,13 @@ public class SoldierHandler extends UnitHandler {
 	public SoldierHandler(RobotController rcin) throws GameActionException {
 		super(rcin);
 		Map.init(rc);
-		Navigation.init(rc, rc.senseEnemyHQLocation(), 25);
+		Navigation.init(rc, rc.senseEnemyHQLocation(), 10);
 	}
 
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
+		rc.setIndicatorString(0, "" +Navigation.dest);
 		if (!Navigation.mapDone) {
 			if (rc.readBroadcast(1) == 1)
 				Navigation.mapDone = true;
