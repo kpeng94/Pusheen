@@ -178,7 +178,12 @@ public class SoldierHandler extends UnitHandler {
 	 * @throws GameActionException 
 	 */
 	private void tryToBeUseful() throws GameActionException {
-		targetLocation = closeToMe;
+		if (pastrLocation != null) {
+			targetLocation = pastrLocation;
+		}
+		else {
+			targetLocation = closeToMe;
+		}
 		Navigation.setDest(targetLocation, 10);
 	}
 

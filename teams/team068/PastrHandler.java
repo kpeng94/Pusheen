@@ -11,6 +11,7 @@ public class PastrHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException{
 		super.execute();
+		rc.broadcast(15000, Clock.getRoundNum());
 	}
 
 }

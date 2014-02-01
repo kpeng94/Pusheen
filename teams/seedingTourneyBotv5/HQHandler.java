@@ -36,6 +36,9 @@ public class HQHandler extends UnitHandler {
 	@Override
 	public void execute() throws GameActionException {
 		super.execute();
+		if (Clock.getRoundNum() == 0) {
+			rc.wearHat();
+		}
 		curAttack = false;
 	
 		if (rc.readBroadcast(51000)==0){
