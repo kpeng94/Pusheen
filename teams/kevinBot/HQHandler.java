@@ -27,6 +27,7 @@ import battlecode.common.*;
  * 13010 - 13019: Squadron locations roughly (avg)
  * 13020 - 13029: Squadron army size
  * 13030 - 13039: Squadron target locations
+ * 13040 - 13049: Squadron leader commands
  * 
  * 13300 - 13399: Squadron number (for attackers and pastr builders)
  * 13400 - 13499: HQ designates what each robots goal is.
@@ -136,8 +137,16 @@ public class HQHandler extends UnitHandler {
 				
 //				TODO: UPDATE SQUADRON NUMBERS LATER
 //				Currently all squad 1, attackers
-				rc.broadcast(13300 + rc.readBroadcast(0), 1);
-				rc.broadcast(13400 + rc.readBroadcast(0), 1);
+				if (Clock.getRoundNum() == 0) {
+					rc.broadcast(13301 + rc.readBroadcast(0), 1);
+					rc.broadcast(13401 + rc.readBroadcast(0), 1);
+					rc.broadcast(13020 + 1, rc.readBroadcast(13020 + 1) + 1);
+					rc.broadcast(13041, 1);
+				} else {
+					rc.broadcast(13300 + rc.readBroadcast(0), 1);
+					rc.broadcast(13400 + rc.readBroadcast(0), 1);					
+					rc.broadcast(13020 + 1, rc.readBroadcast(13020 + 1) + 1);
+				}
 				updateLiveRobots();
 				numberOfRobots++;
 				return;
@@ -209,7 +218,6 @@ public class HQHandler extends UnitHandler {
 					rc.broadcast(13020 + sqnum, (rc.readBroadcast(13020 + sqnum)) - 1);
 				} 
 			}
-			rc.setIndicatorString(0, "0: " + firstSet);
 			rc.broadcast(12301, firstSet);		
 			if (bc > 30) {
 				for (int i = 30; i-- > 0;) {

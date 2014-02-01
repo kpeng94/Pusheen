@@ -18,6 +18,7 @@ public class Attack {
 	private static boolean surrounding = false;
 	private static MapLocation mySurroundDestination;
 	private static MapLocation myLocation;
+	private static MapLocation ctl;
 	private static MapLocation newLocation;
 	private static int defaultOff = 14;
 	private static int id;
@@ -33,6 +34,7 @@ public class Attack {
 	private static int numberOfNTs = 0;
 	private static int numberOfPASTRs = 0;
 	private static boolean healing = false;
+	private static boolean squadronLeader = false;
 	
 	/**
 	 * INITIALIZATION
@@ -42,11 +44,12 @@ public class Attack {
 	 * Initialize the robot controller so that these methods can be used.
 	 * @param rcin
 	 */
-	public static void init(RobotController rcin, int robotID) {
+	public static void init(RobotController rcin, int robotID, MapLocation tl) {
 		rc = rcin;
 		id = robotID;
 		enemyHQLocation = rc.senseEnemyHQLocation();
 		myHQLocation = rc.senseHQLocation();
+		ctl = tl;
 	}
 	
 	
@@ -122,39 +125,40 @@ public class Attack {
 	 */
 	public static void attackMicro() throws GameActionException {
 		storeEnemiesWithinRange();
-		// TODO: Make HQ actually produce this 
 		myLocation = rc.getLocation();
 		squadronNumber = rc.readBroadcast(13300 + id);
-		numberOfUnitsWeHave = rc.readBroadcast(13020 + squadronNumber);
-		numberOfUnitsTheyHave = rc.readBroadcast(12313);
+		squadronLeader = rc.readBroadcast(13000 + squadronNumber) == id;
 		healthLastRound = healthThisRound;
 		healthThisRound = rc.getHealth();
-		numberOfPASTRs = rc.readBroadcast(12311);
-		numberOfNTs = rc.readBroadcast(12312);
-//		Add squadronLeader boolean (true / false)
+		
+		if (squadronLeader) {
+			numberOfUnitsWeHave = rc.readBroadcast(13020 + squadronNumber);
+			numberOfUnitsTheyHave = rc.readBroadcast(12313);
+			numberOfPASTRs = rc.readBroadcast(12311);
+			numberOfNTs = rc.readBroadcast(12312);
+		}
 		goal = rc.readBroadcast(13400 + id);
 		// Let teammates know you are being hurt
 		if (healthThisRound < healthLastRound) {
 			// Let teammates know that you are being attacked by a bot
-			rc.broadcast(39600 + id, 1);
+			rc.broadcast(13600 + id, 1);
 			beingAttacked = true;
 			// We know we've been suicided on because the difference in health is not 0
 			// TODO: We should account for some error here 
 			if ((healthLastRound - healthThisRound) % 10 != 0) {
-				rc.broadcast(39500 + id, 1);
+				rc.broadcast(13500 + id, 1);
 				beingSDed = true;
 			}
 		}
 		
-		if (goal == 1) {
+//		if (goal == 1) {
 			// mostly attack and retreat micro here
 			decideFightingMechanic();
-			rc.setIndicatorString(0, "");
-		} else if (goal == 2) {
-			// mostly attack, no retreat
-		} else if (goal == 3) {
-			
-		}
+//		} else if (goal == 2) {
+//			// mostly attack, no retreat
+//		} else if (goal == 3) {
+//			
+//		}
 		
 		// Predict what your teammates are going to do and calculate and move as a result (if we can)
 
@@ -268,12 +272,33 @@ public class Attack {
 	 * For attacking mode
 	 */
 	private static void decideFightingMechanic() throws GameActionException {
-		if (numberOfUnitsWeHave - numberOfUnitsTheyHave >= 5 && numberOfUnitsWeHave >= numberOfUnitsTheyHave * 2) {
-			attackAndRetreat();
-		} else if (numberOfUnitsWeHave - numberOfUnitsTheyHave <= -2) {
-			justRetreat();
+		rc.setIndicatorString(0, "" + numberOfUnitsWeHave + " them though: " + numberOfUnitsTheyHave);
+		if (squadronLeader) {
+			if (numberOfUnitsWeHave - numberOfUnitsTheyHave >= 3 && numberOfUnitsWeHave >= numberOfUnitsTheyHave * 2) {
+				attackAndRetreat();
+				rc.setIndicatorString(2, "They have not beat us");
+				rc.broadcast(13040 + squadronNumber, 1);
+			} else if (numberOfUnitsWeHave - numberOfUnitsTheyHave <= -2) {
+				rc.setIndicatorString(2, "They have beat us");
+				justRetreat();
+				rc.broadcast(13040 + squadronNumber, 2);
+			} else {
+				rc.setIndicatorString(2, "They have not beat us OBVIOUSLY");
+				suicideAttackAndRetreat();
+				rc.broadcast(13040 + squadronNumber, 3);
+			}			
 		} else {
-			suicideAttackAndRetreat();
+			int bc = rc.readBroadcast(13040 + squadronNumber);
+			if (bc == 1) {
+				attackAndRetreat();
+				rc.setIndicatorString(2, "They have not beat us");				
+			} else if (bc == 2) {
+				rc.setIndicatorString(2, "They have beat us");
+				justRetreat();
+			} else if (bc == 3) {
+				rc.setIndicatorString(2, "They have not beat us OBVIOUSLY");
+				suicideAttackAndRetreat();				
+			}
 		}
 	}
 	
@@ -293,9 +318,11 @@ public class Attack {
 			}
 		} else {
 			MapLocation ml = findClosestEnemyLoc(detectableEnemies, true);
-			Direction dir = myLocation.directionTo(ml);
-			if (!inEnemyRange(detectableEnemyLocations, myLocation.add(dir))) {
-				takeStep(dir);
+			if (ml != null) {
+				Direction dir = myLocation.directionTo(ml);
+				if (!inEnemyRange(detectableEnemyLocations, myLocation.add(dir))) {
+					takeStep(dir);
+				}				
 			}
 		}
 	}

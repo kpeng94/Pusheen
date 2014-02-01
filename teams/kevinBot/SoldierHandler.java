@@ -20,7 +20,7 @@ public class SoldierHandler extends UnitHandler {
 		closeToMe = new MapLocation((myHQLocation.x + enemyHQLocation.x) / 2, 
 													 (myHQLocation.y + enemyHQLocation.y) / 2);
 		Navigation.init(rc, closeToMe, 25);
-		Attack.init(rc, id);
+		Attack.init(rc, id, closeToMe);
 	}
 
 	@Override
@@ -31,10 +31,17 @@ public class SoldierHandler extends UnitHandler {
 			if (rc.readBroadcast(1) == 1)
 				Navigation.mapDone = true;
 		}
-				
+		int squadronNumber = rc.readBroadcast(13300 + id);
+		boolean squadronLeader = rc.readBroadcast(13000 + squadronNumber) == id;		
 		if (rc.isActive()) {
-			tryAttack();
-			tryMove();					
+			if (!squadronLeader && rc.readBroadcast(13040 + squadronNumber) != 0) {
+				tryAttack();
+			} else if (squadronLeader) {
+				tryAttack();
+				tryMove();													
+			} else {
+				tryMove();													
+			}
 		}
 		
 		calculate();
@@ -51,11 +58,10 @@ public class SoldierHandler extends UnitHandler {
 	
 	/* Attempts to move */
 	private void tryMove() throws GameActionException {
-
-//		boolean surrounded = Attack.surround(true);
-//		if (!surrounded && !retreat) {
+		if (rc.isActive()) {
 			Navigation.swarmMove();
-//		}
+			rc.setIndicatorString(1, "I moved on round " + Clock.getRoundNum());
+		}
 	}
 	
 	/* Does calculations */
