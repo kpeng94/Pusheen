@@ -424,25 +424,18 @@ public class SoldierHandler extends UnitHandler {
 	}
 	
 	public MapLocation closestTarget(Robot[] nearbyEnemies) throws GameActionException {
-		double distance=10000;
-		MapLocation closestTargetLocation;
-		RobotInfo info=rc.senseRobotInfo(nearbyEnemies[0]);
-		if (info.type != RobotType.HQ){
-			closestTargetLocation=info.location;
-		} else {
-			closestTargetLocation=rc.senseRobotInfo(nearbyEnemies[1]).location;
-		}
-		
-		//check how for loop works in java
-		for (int i=1 ; i < nearbyEnemies.length; i++){
-			info = rc.senseRobotInfo(nearbyEnemies[i]);
-			int closerdistance = rc.getLocation().distanceSquaredTo(info.location);
-			if (info.type != RobotType.HQ && closerdistance<distance){
-				distance=closerdistance;
-				closestTargetLocation=info.location;
+		MapLocation closestML = null;
+		int distance = 100000;		
+		for (int i = nearbyEnemies.length; i-- > 0;) {
+			RobotInfo ri = rc.senseRobotInfo(nearbyEnemies[i]);
+			MapLocation newLoc = ri.location;
+			int nd = myLoc.distanceSquaredTo(newLoc);
+			if (nd < distance) {
+				closestML = newLoc;
+				distance = nd;
 			}
-		}
-		return closestTargetLocation;
+		}			
+		return closestML;
 	}
 	
 	public MapLocation prioritizeTarget(Robot[] nearbyEnemies) throws GameActionException {
