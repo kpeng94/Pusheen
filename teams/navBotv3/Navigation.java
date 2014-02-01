@@ -1,13 +1,10 @@
 package navBotv3;
 
-import battlecode.common.Clock;
-import battlecode.common.Direction;
-import battlecode.common.GameActionException;
-import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
+import battlecode.common.*;
 
 public class Navigation {
 	static final Direction[] dir = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
+	static final int[] reversedForward = new int[] {7, 1, 0};
 	
 	public static RobotController rc;
 	public static int width;
@@ -26,6 +23,8 @@ public class Navigation {
 	public static boolean done; // Found a path to the destination
 	public static MapLocation dest;
 	public static int[][] mapInfo;
+	
+	public static MapLocation localNext;
 	
 	/* Initializes navigation */
 	public static void init(RobotController rcin) throws GameActionException {
@@ -47,6 +46,7 @@ public class Navigation {
 			done = false;
 			
 			cur = rc.getLocation();
+			localNext = cur;
 			tracing = false;
 			
 			if (dest.distanceSquaredTo(enemyHQ) <= 25) {
@@ -74,7 +74,38 @@ public class Navigation {
 	
 	/* Moves along a tangent bug path */
 	public static void move() throws GameActionException {
+		calculate(2500);
+		MapLocation curLoc = rc.getLocation();
+		if (curLoc.x == dest.x && curLoc.y == dest.y) {
+			return;
+		}
+		while (curLoc.distanceSquaredTo(localNext) <= 2) {
+			if (localNext.x == dest.x && localNext.y == dest.y) {
+				return;
+			}
+			rc.setIndicatorString(0, "" + localNext);
+			rc.setIndicatorString(1, "" +mapInfo[localNext.x][localNext.y]);
+			localNext = localNext.add(dir[(mapInfo[localNext.x][localNext.y] % 10) - 1]);
+		}
+		trivialMove(localNext, reversedForward);
+	}
+	
+	/* Trivial movement */
+	public static void trivialMove(MapLocation mapLoc, int[] looks) throws GameActionException {
+		trivialMove(mapLoc, looks, false);
+	}
+	
+	public static void trivialMove(MapLocation mapLoc, int[] looks, boolean tryDanger) throws GameActionException {
+		MapLocation curLoc = rc.getLocation();
 		
+		int toDest = curLoc.directionTo(mapLoc).ordinal();
+		for (int i = looks.length; i-- > 0;) {
+			Direction moveDir = dir[(toDest + looks[i]) % 8];
+			if (rc.canMove(moveDir) && (tryDanger || Map.getTile(curLoc.add(moveDir)) != 5)) {
+				rc.move(moveDir);
+				return;
+			}
+		}
 	}
 	
 	/* Calculate for tangent bug path */
